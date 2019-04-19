@@ -6,6 +6,12 @@ pragma solidity ^0.4.25;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
+
+
+contract FlightSuretyData 
+{
+    function registerAirline(address newAirline,string name)external;
+}
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
@@ -25,7 +31,7 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
     address private contractOwner;          // Account used to deploy contract
-
+    FlightSuretyData fsd;
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -73,10 +79,13 @@ contract FlightSuretyApp {
     */
     constructor
                                 (
+                                    address flightSuretyData
                                 ) 
                                 public 
     {
         contractOwner = msg.sender;
+        fsd = FlightSuretyData(flightSuretyData);
+
     }
 
     /********************************************************************************************/
@@ -100,14 +109,20 @@ contract FlightSuretyApp {
     * @dev Add an airline to the registration queue
     *
     */   
-    function registerAirline
+    function registerAirline 
                             (   
+                                address newAirline, string name
                             )
                             external
-                            pure
-                            returns(bool success, uint256 votes)
+                            //pure
+                            payable
+                            returns
+                            (
+            bool
+        )
     {
-        return (success, 0);
+        fsd.registerAirline(newAirline, name); 
+        return true;
     }
 
 

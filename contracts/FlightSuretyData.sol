@@ -1,5 +1,4 @@
 pragma solidity ^0.4.25;
-
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract FlightSuretyData {
@@ -9,9 +8,24 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    address private contractOwner;                                      // Account used to deploy contract
+    address private contractOwner;
+    address private authorizedCaller;                                   // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    
+    uint private registrationCost = 5 ether;
+    mapping(address => Airline) airlines;
 
+    struct Airline {
+        bool isApproved;
+        uint256 updatedTimestamp;        
+        uint256 registrationFees;
+        bool exists;
+        string AirlineName;
+    }
+
+    uint256 public cashOnHand;
+
+    //    mapping(uint => Item) items;
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -50,15 +64,39 @@ contract FlightSuretyData {
     /**
     * @dev Modifier that requires the "ContractOwner" account to be the function caller
     */
+
     modifier requireContractOwner()
     {
-        require(msg.sender == contractOwner, "Caller is not contract owner");
+        require(msg.sender == contractOwner, " Caller is not contract owner");
         _;
     }
 
+    modifier requireAuthorizedCaller()
+    {
+        require(msg.sender == authorizedCaller, "Caller is not Authorized Caller");
+        _;
+    }
+
+    modifier requireNewAirline(address aa)
+    {
+        Airline memory a = airlines[aa];
+        require(!a.exists, "Airline Already Exists");
+        _;
+    }
+    modifier requireFunding()
+    {
+        require(msg.value >= registrationCost, "Need Atleast 5 Ethers to Register");
+        _;
+    }
+ 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
+
+    function authorizeCaller(address o) public requireContractOwner
+    {
+        authorizedCaller = o;
+    }
 
     /**
     * @dev Get operating status of contract
@@ -84,7 +122,7 @@ contract FlightSuretyData {
                                 bool mode
                             ) 
                             external
-                            requireContractOwner 
+                             
     {
         operational = mode;
     }
@@ -99,13 +137,48 @@ contract FlightSuretyData {
     *
     */   
     function registerAirline
-                            (   
-                            )
-                            external
-                            pure
+                            (   address newAirline, string _name)
+                            public
+                            //pure
+                            payable
+                            requireAuthorizedCaller
+                            requireNewAirline(newAirline) 
+                            requireFunding
+                            returns
+        (
+            address, bool, uint256, uint256, bool, string
+        )
     {
+        Airline memory a;
+        a =  Airline(
+                    
+                    false,  //isApproved
+                    now,    //uint256 updatedTimestamp;        
+                    msg.value,      //uint256 registrationFees;
+                    true,       //bool exists;
+                    _name        //string name
+        );
+
+        airlines[newAirline] = a;
+        Airline b = airlines[newAirline];
+        cashOnHand += msg.value;
+        return ( newAirline, b.isApproved, b.updatedTimestamp, b.registrationFees, b.exists, b.AirlineName) ;
+        
+
     }
 
+    function isAirline ( address airline) public returns (address, bool, uint256, uint256, bool, string memory) 
+    {
+        Airline a ;
+        a = airlines[airline];
+        return ( airline, a.isApproved, a.updatedTimestamp, a.registrationFees, a.exists, a.AirlineName) ;
+    }
+
+    function getBalance (address a) public returns (uint256)
+    {
+        return a.balance;
+    }
+    
 
    /**
     * @dev Buy insurance for a flight
@@ -137,7 +210,7 @@ contract FlightSuretyData {
      *
     */
     function pay
-                            (
+                            ( 
                             )
                             external
                             pure

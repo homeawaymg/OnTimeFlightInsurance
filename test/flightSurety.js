@@ -8,6 +8,7 @@ contract('Flight Surety Tests', async (accounts) => {
   before('setup contract', async () => {
     config = await Test.Config(accounts);
     await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+ 
   });
 
   /****************************************************************************************/
@@ -46,9 +47,10 @@ contract('Flight Surety Tests', async (accounts) => {
           await config.flightSuretyData.setOperatingStatus(false);
       }
       catch(e) {
+          console.log(e);
           accessDenied = true;
       }
-      assert.equal(accessDenied, false, "Access not restricted to Contract Owner");
+      assert.equal(accessDenied, false, "Access restricted to Contract Owner");
       
   });
 
@@ -75,20 +77,23 @@ contract('Flight Surety Tests', async (accounts) => {
     
     // ARRANGE
     let newAirline = accounts[2];
-
+    let cashOnHand =  web3.utils.toWei("6",'ether');
     // ACT
     try {
-        await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+        let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address,value:cashOnHand});
+        console.log(x);
     }
     catch(e) {
-
+        console.log(e);
     }
-    let result = await config.flightSuretyData.isAirline.call(newAirline); 
 
+    
+    let result = await config.flightSuretyData.isAirline.call(newAirline); 
+    
     // ASSERT
-    assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
+    assert.equal(result[4], false, "Airline should not be able to register another airline if it hasn't provided funding");
 
   });
- 
+  
 
 });
