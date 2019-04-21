@@ -1,5 +1,5 @@
 pragma solidity ^0.4.25;
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol"; 
 
 contract FlightSuretyData {
     using SafeMath for uint256;
@@ -7,23 +7,62 @@ contract FlightSuretyData {
     /********************************************************************************************/
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
-
+   
     address private contractOwner;
     address private authorizedCaller;                                   // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     
-    uint private registrationCost = 5 ether;
+
     mapping(address => Airline) airlines;
+
+    Airline public testOut;
 
     struct Airline {
         bool isApproved;
         uint256 updatedTimestamp;        
-        uint256 registrationFees;
+        uint256 fundsPaid;
         bool exists;
         string AirlineName;
     }
 
-    uint256 public cashOnHand;
+    int public cashOnHand;
+    uint MULTIPLIER = 3;
+    uint DIVIDER = 3;
+
+    struct LedgerEntry {
+        address airline;
+        string  flight;
+        uint256  flightTimestamp;
+
+        uint256 purchaseAmount;
+        uint256 updatedTimestamp;
+
+        uint256 credit;
+        bool exists;
+        bytes32 creditForKey;
+        bool paid;
+    }
+
+    mapping(address => LedgerEntry) insuranceLedger;
+    
+    // Flight status codees
+    uint8 private constant STATUS_CODE_UNKNOWN = 0;
+    uint8 private constant STATUS_CODE_ON_TIME = 10;
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
+    uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
+    uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
+    uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+    struct Flight {
+        bool isRegistered;
+        uint8 statusCode;
+        uint256 updatedTimestamp;        
+        address airline;
+        bool exists;
+        string flight;
+        uint256 flightTimeStamp;
+    }
+    mapping(bytes32 => Flight) private flights;
+
 
     //    mapping(uint => Item) items;
     /********************************************************************************************/
@@ -38,7 +77,8 @@ contract FlightSuretyData {
     constructor
                                 (
                                 ) 
-                                public 
+                                public
+                                payable
     {
         contractOwner = msg.sender;
     }
@@ -77,18 +117,55 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireNewAirline(address aa)
+    modifier requireNewAirline(address _a)
     {
-        Airline memory a = airlines[aa];
+        Airline memory a = airlines[_a];
         require(!a.exists, "Airline Already Exists");
         _;
     }
-    modifier requireFunding()
+
+    modifier requireExistingAirline(address _a)
     {
-        require(msg.value >= registrationCost, "Need Atleast 5 Ethers to Register");
+        Airline memory a = airlines[_a];
+        require(a.exists, "Airline Does Not Exist");
         _;
     }
- 
+
+    modifier requireExistingAndFundedAirline(address _a)
+    {
+        Airline memory a = airlines[_a];
+        require(a.exists, "Airline Does Not Exist");
+        require(a.fundsPaid > 0, "Airline has not provided funds!");
+        _;
+    }
+
+
+    modifier requireLedgerEntryExists(address _a)
+    {
+        LedgerEntry memory a = insuranceLedger[_a];
+        require(a.exists, "Insurance Never Purchased");
+        _;
+    }
+
+    modifier requireLedgerEntryExistsAndNotPaid(address _a)
+    {
+        LedgerEntry memory a = insuranceLedger[_a];
+        require(a.exists, "Insurance Never Purchased");
+        require(a.paid != true, "Insurance Already Paid");
+        require(a.credit > 0, "No Insurance Credit");
+        _;
+    }
+
+
+    modifier requireFlightStatusKnown(address _a)
+    {
+        LedgerEntry memory a = insuranceLedger[_a];
+        require(a.exists, "Insurance Never Purchased");
+        _;
+    }
+
+
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -108,7 +185,7 @@ contract FlightSuretyData {
                             view 
                             returns(bool) 
     {
-        return operational;
+        return operational;  
     }
 
 
@@ -135,46 +212,76 @@ contract FlightSuretyData {
     * @dev Add an airline to the registration queue
     *      Can only be called from FlightSuretyApp contract
     *
-    */   
+    */    
     function registerAirline
-                            (   address newAirline, string _name)
+                            (   address newAirline, string memory _name)
                             public
-                            //pure
-                            payable
-                            requireAuthorizedCaller
+                            //requireAuthorizedCaller
                             requireNewAirline(newAirline) 
-                            requireFunding
                             returns
         (
-            address, bool, uint256, uint256, bool, string
+            bool  
         )
     {
-        Airline memory a;
-        a =  Airline(
-                    
+        
+        Airline memory a =  Airline( 
                     false,  //isApproved
                     now,    //uint256 updatedTimestamp;        
-                    msg.value,      //uint256 registrationFees;
+                    0,      //uint256 registrationFees;
                     true,       //bool exists;
                     _name        //string name
         );
 
         airlines[newAirline] = a;
-        Airline b = airlines[newAirline];
-        cashOnHand += msg.value;
-        return ( newAirline, b.isApproved, b.updatedTimestamp, b.registrationFees, b.exists, b.AirlineName) ;
-        
-
+        return (a.exists) ;
+ 
     }
 
-    function isAirline ( address airline) public returns (address, bool, uint256, uint256, bool, string memory) 
+  function registerFlight
+                                (
+                                    address airline,
+                                    string  flight,
+                                    uint256 timestamp
+                                )
+                                external
+                                requireExistingAndFundedAirline(airline)
+                                returns (
+                                    bytes32
+                                )
     {
-        Airline a ;
-        a = airlines[airline];
-        return ( airline, a.isApproved, a.updatedTimestamp, a.registrationFees, a.exists, a.AirlineName) ;
+        Flight memory f = Flight(true, STATUS_CODE_UNKNOWN, now, airline, true, flight, timestamp);
+        bytes32 key = getFlightKey(airline,flight,timestamp);
+        flights[key]=f;
+        return key;
+
+    }
+    
+    function GetFlight (            address airline,
+                                    string  flight,
+                                    uint256 timestamp) public view returns (bytes32, bool, uint8, uint256, address, bool, string, uint256 ) 
+    {
+        bytes32 key = getFlightKey(airline,flight,timestamp);
+        Flight f = flights[key];
+        return ( key, f.isRegistered, f.statusCode, f.updatedTimestamp, f.airline, f.exists, f.flight, f.flightTimeStamp) ;
     }
 
-    function getBalance (address a) public returns (uint256)
+
+    function GetAirline ( address airline) public view returns (address, bool, uint256, uint256, bool, string ) 
+    {
+        Airline storage a  = airlines[airline];
+        
+        return ( airline, a.isApproved, a.updatedTimestamp, a.fundsPaid, a.exists, a.AirlineName) ;
+    }
+    
+    
+    function isAirline ( address airline) public view returns ( bool) 
+    {
+        Airline storage a  = airlines[airline];
+        
+        return ( a.exists) ;
+    }
+
+    function getBalance (address a) public view returns (uint256)
     {
         return a.balance;
     }
@@ -185,11 +292,29 @@ contract FlightSuretyData {
     *
     */   
     function buy
-                            (                             
+                            (    address _airline,string _flight ,  uint256 _flightDeparture                        
                             )
                             external
                             payable
+                            requireExistingAirline(_airline) returns (bool)
     {
+        uint256 _now = now;
+        bytes32 key = getFlightKey(_airline,_flight,_flightDeparture);
+        LedgerEntry memory le = LedgerEntry(
+            _airline,
+            _flight,
+            _flightDeparture,
+            msg.value,
+            _now,
+
+            0,
+            true,
+            key,
+            false
+        );
+        insuranceLedger[msg.sender] = le;
+        cashOnHand = int(cashOnHand) + int(msg.value);
+        return true;
 
     }
 
@@ -198,23 +323,42 @@ contract FlightSuretyData {
     */
     function creditInsurees
                                 (
+                                    address insuree
                                 )
                                 external
-                                pure
+                                
+                                requireContractOwner
+                                requireLedgerEntryExists(insuree)
     {
+        LedgerEntry insurance = insuranceLedger[insuree];
+        Flight f = flights[insurance.creditForKey];
+        //require(insurance.creditForKey != key, "Insurance already Credited");
+        require(f.exists, "No Insusrance Exists for crediting");
+        require(f.statusCode == STATUS_CODE_LATE_AIRLINE, "Crediting Only applicable for Flight Delay");
+        insurance.credit = insurance.purchaseAmount * MULTIPLIER / DIVIDER;
+        insurance.updatedTimestamp = now;
     }
     
-
+ 
     /**
      *  @dev Transfers eligible payout funds to insuree
      *
     */
     function pay
                             ( 
+                                address insuree
                             )
                             external
-                            pure
+                            
+
+                            requireContractOwner
+                            requireLedgerEntryExistsAndNotPaid(insuree)
+
+
     {
+        LedgerEntry insurance = insuranceLedger[insuree];
+        insuree.transfer(insurance.credit);
+        insurance.credit = 0;
     }
 
    /**
@@ -227,7 +371,11 @@ contract FlightSuretyData {
                             )
                             public
                             payable
+                            requireExistingAirline(msg.sender)
     {
+        airlines[msg.sender].fundsPaid += msg.value;
+        cashOnHand = int(cashOnHand) + int(msg.value);
+        //contractOwner.transfer(msg.value);
     }
 
     function getFlightKey
@@ -253,6 +401,22 @@ contract FlightSuretyData {
     {
         fund();
     }
+
+    function testFlightDelaySetup 
+            (
+                            address _airline,
+                            string memory _flight,
+                            uint256 _flightDeparture
+            ) 
+            public returns (uint8)
+    {
+        bytes32 key = getFlightKey(_airline,_flight,_flightDeparture);
+        Flight f = flights[key];
+        f.statusCode = STATUS_CODE_LATE_AIRLINE;
+        flights[key] = f;
+        return flights[key].statusCode;
+    }
+
 
 
 }

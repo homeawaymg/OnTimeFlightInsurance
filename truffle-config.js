@@ -1,5 +1,5 @@
 var HDWalletProvider = require("truffle-hdwallet-provider");
-var mnemonic = "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat";
+var mnemonic = "shove tissue access sheriff taxi hammer silver salad motion original refuse logic";
 //var mnemonic = "swarm ice lawsuit picnic route fiscal rifle joy style struggle actor spirit";
 //var mnemonic ="0x2e8B706b03A3464edc3cE4899e6354E9CdC2bc30";
 

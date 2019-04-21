@@ -4,13 +4,11 @@ pragma solidity ^0.4.25;
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
 // More info: https://www.nccgroup.trust/us/about-us/newsroom-and-events/blog/2018/november/smart-contract-insecurity-bad-arithmetic/
 
-import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
-
-
+import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol"; 
 
 contract FlightSuretyData 
 {
-    function registerAirline(address newAirline,string name)external;
+    function registerAirline(address newAirline, string name) external returns (bool);
 }
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -29,7 +27,7 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
-
+    uint private registrationCost = 5 ether;
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData fsd;
     struct Flight {
@@ -81,7 +79,8 @@ contract FlightSuretyApp {
                                 (
                                     address flightSuretyData
                                 ) 
-                                public 
+                                public
+                                payable
     {
         contractOwner = msg.sender;
         fsd = FlightSuretyData(flightSuretyData);
@@ -104,7 +103,11 @@ contract FlightSuretyApp {
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-  
+    modifier requireFunding() 
+    {
+        require(msg.value >= registrationCost, "Need Atleast 5 Ethers to Register");
+        _;
+    }
    /**
     * @dev Add an airline to the registration queue
     *
@@ -113,16 +116,14 @@ contract FlightSuretyApp {
                             (   
                                 address newAirline, string name
                             )
-                            external
-                            //pure
-                            payable
+                            public
                             returns
-                            (
+        (
             bool
         )
     {
-        fsd.registerAirline(newAirline, name); 
-        return true;
+        bool out = fsd.registerAirline(newAirline, name);   
+        return out;
     }
 
 
@@ -132,10 +133,15 @@ contract FlightSuretyApp {
     */  
     function registerFlight
                                 (
+                                    address airline,
+                                    string flight,
+                                    uint256 timestamp
                                 )
                                 external
                                 pure
+                                
     {
+        
 
     }
     
