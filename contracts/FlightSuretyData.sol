@@ -11,8 +11,11 @@ contract FlightSuretyData {
     address private contractOwner;
     address private authorizedCaller;                                   // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
+    uint16 private sponsoringAirlinesCount;    
+    uint8 private COUNT_AFTER_VOTING_KICKSIN = 4;
     
-
+    mapping(address => address[]) AirlineSponsors;
+    
     mapping(address => Airline) airlines;
 
     Airline public testOut;
@@ -23,6 +26,7 @@ contract FlightSuretyData {
         uint256 fundsPaid;
         bool exists;
         string AirlineName;
+        
     }
 
     int public cashOnHand;
@@ -76,11 +80,14 @@ contract FlightSuretyData {
     */
     constructor
                                 (
+                                    address firstAirline,
+                                    string firstAirlineName
                                 ) 
                                 public
                                 payable
     {
         contractOwner = msg.sender;
+        registerAirlineUtil(firstAirline, firstAirlineName);
     }
 
     /********************************************************************************************/
@@ -164,7 +171,11 @@ contract FlightSuretyData {
         _;
     }
 
-
+    modifier requireCalleeIsFunded()
+    {
+        require(airlines[msg.sender].fundsPaid >= 10, "Calling Airlines should fund before registering others");
+        _;
+    }
 
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
@@ -199,6 +210,7 @@ contract FlightSuretyData {
                                 bool mode
                             ) 
                             external
+                            requireContractOwner
                              
     {
         operational = mode;
@@ -218,14 +230,31 @@ contract FlightSuretyData {
                             public
                             //requireAuthorizedCaller
                             requireNewAirline(newAirline) 
+                            requireCalleeIsFunded
                             returns
         (
             bool  
         )
     {
-        
+        return registerAirlineUtil(newAirline, _name);
+    }
+
+    function registerAirlineUtil
+                            (   address newAirline, string memory _name)
+                            internal
+                            returns
+        (
+            bool  
+        )
+    {
+        bool approved;
+        if (sponsoringAirlinesCount < COUNT_AFTER_VOTING_KICKSIN || AirlineSponsors[newAirline].length > sponsoringAirlinesCount / 2) 
+        {
+           approved = true;
+        }
+
         Airline memory a =  Airline( 
-                    false,  //isApproved
+                    approved,  //isApproved
                     now,    //uint256 updatedTimestamp;        
                     0,      //uint256 registrationFees;
                     true,       //bool exists;
@@ -233,9 +262,44 @@ contract FlightSuretyData {
         );
 
         airlines[newAirline] = a;
+        sponsoringAirlinesCount++;
         return (a.exists) ;
- 
     }
+    /********************************************************************
+    * @dev implement a 50% consensus
+    *
+    *********************************************************************/   
+    // 
+    function voteForAirline
+        (
+            address sponsoredAirline
+        ) 
+        public 
+        requireCalleeIsFunded
+        returns 
+        (
+            bool
+        )
+    {
+        bool isDuplicate = false;
+        for(uint c=0;c<AirlineSponsors[sponsoredAirline].length; c++)
+        {
+            if (AirlineSponsors[sponsoredAirline][c] == msg.sender) 
+            {
+                isDuplicate = true;
+                break;
+            }
+        }
+        if (!isDuplicate)
+        {
+            AirlineSponsors[sponsoredAirline].push(msg.sender);
+        }
+        if (AirlineSponsors[sponsoredAirline].length > sponsoringAirlinesCount / 2) 
+        {
+            airlines[sponsoredAirline].isApproved = true;
+        }
+    }
+
 
   function registerFlight
                                 (
@@ -253,9 +317,10 @@ contract FlightSuretyData {
         bytes32 key = getFlightKey(airline,flight,timestamp);
         flights[key]=f;
         return key;
-
     }
-    
+
+
+
     function GetFlight (            address airline,
                                     string  flight,
                                     uint256 timestamp) public view returns (bytes32, bool, uint8, uint256, address, bool, string, uint256 ) 
@@ -372,10 +437,11 @@ contract FlightSuretyData {
                             public
                             payable
                             requireExistingAirline(msg.sender)
+                            returns (int)
     {
         airlines[msg.sender].fundsPaid += msg.value;
         cashOnHand = int(cashOnHand) + int(msg.value);
-        //contractOwner.transfer(msg.value);
+        return cashOnHand;
     }
 
     function getFlightKey
