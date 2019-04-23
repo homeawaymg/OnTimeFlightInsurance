@@ -357,14 +357,19 @@ contract FlightSuretyData {
     *
     */   
     function buy
-                            (    address _airline,string _flight ,  uint256 _flightDeparture                        
+                            (    address _airline, string _flight ,  uint256 _flightDeparture                        
                             )
                             external
                             payable
                             requireExistingAirline(_airline) returns (bool)
     {
-        uint256 _now = now;
         bytes32 key = getFlightKey(_airline,_flight,_flightDeparture);
+        //check if the flight is insurable
+        require(flights[key].exists, "Cannot buy insurance for a non-insurable flight");
+
+
+        uint256 _now = now;
+
         LedgerEntry memory le = LedgerEntry(
             _airline,
             _flight,
@@ -382,6 +387,24 @@ contract FlightSuretyData {
         return true;
 
     }
+    function checkBoughtInsurance
+                            (    address _airline, string _flight ,  uint256 _flightDeparture                        
+                            )
+                            external
+                            view
+                            returns
+                            (
+                                bool
+                            )
+    {
+        bytes32 key = getFlightKey(_airline,_flight,_flightDeparture);
+        require(insuranceLedger[msg.sender].airline == _airline, "Insurance Airline Does not match");
+        require(insuranceLedger[msg.sender].exists == true, "Insurance does not exist");
+        
+        return insuranceLedger[msg.sender].exists;
+
+    }
+
 
     /**
      *  @dev Credits payouts to insurees
