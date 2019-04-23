@@ -119,7 +119,7 @@ contract('Flight Surety Tests', async (accounts) => {
     
     // ARRANGE
     let newAirline = accounts[2];
-    let cashOnHand =  web3.toWei("10",'ether');
+    let cashOnHand =  web3.utils.toWei("10",'ether');
     let x = false;
     // ACT
     try {
@@ -188,7 +188,7 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
 
 
   it('(airline) should be able to vote for 5th Airline After Fundings', async () => {
-    let cashOnHand =  web3.toWei("10",'ether');
+    let cashOnHand =  web3.utils.toWei("10",'ether');
 
     // ARRANGE
     //first fund the initial 3 new airlines
@@ -223,13 +223,13 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
   });
 
   it('(airline) total Funding should be', async () => {
-    let cashOnHand =  web3.toWei("10",'ether');
+    let cashOnHand =  web3.utils.toWei("10",'ether');
     //fund the 5th Airline as well
     await config.flightSuretyData.fund({from: accounts[5],value:cashOnHand});
 
     let totalFunding = await config.flightSuretyData.cashOnHand.call(); 
-    totalFunding = web3.fromWei(totalFunding, 'wei')
-    assert.equal( totalFunding, web3.toWei("50",'ether'), "Cash on hand should reflect the funding above - NOT OK")
+    totalFunding = web3.utils.fromWei(totalFunding, 'wei')
+    assert.equal( totalFunding, web3.utils.toWei("50",'ether'), "Cash on hand should reflect the funding above - NOT OK")
   });
 
  it('(airline) should be able to register a flight that is eligible for Insurance Purchase', async () => {
@@ -262,7 +262,7 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
 
 
     // ACT
-    let cashOnHand =  web3.toWei("1",'ether');
+    let cashOnHand =  web3.utils.toWei("1",'ether');
     var status = false;
     try {
         //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
@@ -281,7 +281,7 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
   it('(Traveler) should be credited if insurance payout is applicable', async () => {
     // ARRANGE
     // ACT
-    let cashOnHand =  web3.toWei("1",'ether');
+    let cashOnHand =  web3.utils.toWei("1",'ether');
     var status = false;
     try {
         //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});

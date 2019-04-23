@@ -1,22 +1,22 @@
 
 var Test = require('../config/testConfig.js');
 //var BigNumber = require('bignumber.js');
+ // Watch contract events
+ const STATUS_CODE_UNKNOWN = 0;
+ const STATUS_CODE_ON_TIME = 10;
+ const STATUS_CODE_LATE_AIRLINE = 20;
+ const STATUS_CODE_LATE_WEATHER = 30;
+ const STATUS_CODE_LATE_TECHNICAL = 40;
+ const STATUS_CODE_LATE_OTHER = 50;
 
 contract('Oracles', async (accounts) => {
 
-  const TEST_ORACLES_COUNT = 20;
+  const TEST_ORACLES_COUNT = 10;
   var config;
   before('setup contract', async () => {
     config = await Test.Config(accounts);
 
-    // Watch contract events
-    const STATUS_CODE_UNKNOWN = 0;
-    const STATUS_CODE_ON_TIME = 10;
-    const STATUS_CODE_LATE_AIRLINE = 20;
-    const STATUS_CODE_LATE_WEATHER = 30;
-    const STATUS_CODE_LATE_TECHNICAL = 40;
-    const STATUS_CODE_LATE_OTHER = 50;
-
+   
   });
 
 
@@ -40,7 +40,8 @@ contract('Oracles', async (accounts) => {
     let timestamp = Math.floor(Date.now() / 1000);
 
     // Submit a request for oracles to get status information for a flight
-    await config.flightSuretyApp.fetchFlightStatus(config.firstAirline, flight, timestamp);
+    var w = await config.flightSuretyApp.fetchFlightStatus(config.firstAirline, flight, timestamp);
+    console.log 
     // ACT
 
     // Since the Index assigned to each test account is opaque by design
@@ -51,6 +52,7 @@ contract('Oracles', async (accounts) => {
 
       // Get oracle information
       let oracleIndexes = await config.flightSuretyApp.getMyIndexes.call({ from: accounts[a]});
+      console.log(oracleIndexes);
       for(let idx=0;idx<3;idx++) {
 
         try {
@@ -60,7 +62,10 @@ contract('Oracles', async (accounts) => {
         }
         catch(e) {
           // Enable this when debugging
+           console.log("----------------------------------------------------------------");
            console.log('\nError', idx, oracleIndexes[idx].toNumber(), flight, timestamp);
+           console.log(e.reason);
+           console.log("----------------------------------------------------------------");
         }
 
       }
