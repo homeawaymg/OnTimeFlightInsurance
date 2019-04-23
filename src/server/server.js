@@ -50,13 +50,13 @@ async function registrationHelper() {
             "gas": 471230,
             "gasPrice": 100000
         }); 
-        let result = flightSuretyApp.methods.getMyIndexes.call({from: acct});
+        let result = await flightSuretyApp.methods.getMyIndexes().call({from: acct});
         console.log(result);
         oracles.set(acct, result);
-        console.log(`Oracle ${acct} registered: ${result[0]}, ${result[0]}, ${result[0]}`);
+        console.log(`Oracle ${acct} registered: ${oracles.get(acct)[0]}, ${oracles.get(acct)[1]}, ${oracles.get(acct)[2]}`);
       } catch (e) 
       {
-        console.log(e.message);
+        console.log(e.message); 
       }
     });
 } 
@@ -64,7 +64,7 @@ async function registrationHelper() {
 registrationHelper();
 
 async function SubmitOracleResponse(index, airline, flight, timestamp, status, acct) {
-  await config.flightSuretyApp.submitOracleResponse(index, airline, flight, timestamp, status, { from: acct });
+  await flightSuretyApp.methods.submitOracleResponse().call(index, airline, flight, timestamp, status, { from: acct });
 }
 
 
@@ -73,6 +73,9 @@ flightSuretyApp.events.OracleRequest({
     fromBlock: "latest"
     }, function (error, event) {
     if (error) {console.log(error);}
+    
+
+    console.log("GOT AN EVENT REQUEST");
 
     let airline = event.returnValues.airline; 
     let flight = event.returnValues.flight;
