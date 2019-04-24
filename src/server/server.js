@@ -51,17 +51,19 @@ async function registrationHelper() {
             "gasPrice": 100000
         }); 
         let result = await flightSuretyApp.methods.getMyIndexes().call({from: acct});
-        console.log(result);
-        oracles.set(acct, result);
+        //console.log(result);
+        oracles.set(acct,result);
         console.log(`Oracle ${acct} registered: ${oracles.get(acct)[0]}, ${oracles.get(acct)[1]}, ${oracles.get(acct)[2]}`);
       } catch (e) 
       {
-        console.log(e.message); 
+        //console.log(e.message); 
       }
     });
 } 
  
 registrationHelper();
+
+
 
 async function SubmitOracleResponse(index, airline, flight, timestamp, status, acct) {
   await flightSuretyApp.methods.submitOracleResponse().call(index, airline, flight, timestamp, status, { from: acct });
@@ -70,43 +72,39 @@ async function SubmitOracleResponse(index, airline, flight, timestamp, status, a
 
 
 flightSuretyApp.events.OracleRequest({
-    fromBlock: "latest"
+    fromBlock: 0
     }, function (error, event) {
-    if (error) {console.log(error);}
+      console.log(event);
+      if (error) {
+        console.log(error);
+      }
     
+      let airline = event.returnValues.airline; 
+      let flight = event.returnValues.flight;
+      let timestamp = event.returnValues.timestamp; 
+      let found = false;
 
-    console.log("GOT AN EVENT REQUEST");
-
-    let airline = event.returnValues.airline; 
-    let flight = event.returnValues.flight;
-    let timestamp = event.returnValues.timestamp; 
-    let found = false;
-
-    for (var [acct, value] of oracles) {
-      console.log(acct + ' = ' + value);
-      for(let idx=0;idx<3;idx++) {
-        try {
-          // Submit a response...it will only be accepted if there is an Index match
-          SubmitOracleResponse(value[idx], airline, flight, timestamp, STATUS_CODE_ON_TIME,acct);
-        }
-        catch(e) {
-          // Enable this when debugging
-          console.log("----------------------------------------------------------------");
-          console.log('\nError', idx, value[idx].toNumber(), flight, timestamp);
-          console.log(e.reason);
-          console.log("----------------------------------------------------------------");
-        }
-    }
-    }
+      for (var [acct, value] of oracles) {
+        console.log(acct + ' = ' + value);
+        for(let idx=0;idx<3;idx++) {
+          try {
+            // Submit a response...it will only be accepted if there is an Index match
+            SubmitOracleResponse(value[idx], airline, flight, timestamp, STATUS_CODE_ON_TIME,acct);
+          }
+          catch(e) {
+            // Enable this when debugging
+            console.log("----------------------------------------------------------------");
+            console.log('\nError', idx, value[idx].toNumber(), flight, timestamp);
+            console.log(e.reason);
+            console.log("----------------------------------------------------------------");
+          }
+      }
+      }
 
  
 
     console.log(event)
 });
-
-
-
-
 
 
 const app = express();
