@@ -18,10 +18,11 @@ const TEST_ORACLES_COUNT = 10;
 
 
 let config = Config['localhost'];
+console.log(config.url);
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 web3.eth.defaultAccount = web3.eth.accounts[0];
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+//let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 let accts = '';
 var oracles = new Map();
 let fee = 0;
@@ -31,7 +32,7 @@ async function registrationHelper() {
       try {
         fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
       } catch (e) {
-        console.log(e.reason);
+        console.log(e);
       }
       // ACT
       accts = await web3.eth.getAccounts();
@@ -64,46 +65,72 @@ async function registrationHelper() {
 registrationHelper();
 
 
+flightSuretyApp.events.FlightStatusInfo({
+  fromBlock: "latest"
+  }, function (error, event) {
+    //console.log(event);
+    if (error) {
+      console.log(error);
+    }
+    else {
+      let airline = event.returnValues.airline; 
+      let flight = event.returnValues.flight;
+      let timestamp = event.returnValues.timestamp;
+      let status = event.returnValues.status;
+      console.log(` GOT FLIGHT STATUS INFO - ${airline}, ${flight}, ${timestamp}, ${status}`);
+    }
+  }
+)
 
-async function SubmitOracleResponse(index, airline, flight, timestamp, status, acct) {
-  await flightSuretyApp.methods.submitOracleResponse().call(index, airline, flight, timestamp, status, { from: acct });
-}
+flightSuretyApp.events.OracleReport({
+  fromBlock: "latest"
+  }, function (error, event) {
+    //console.log(event);
+    if (error) {
+      console.log(error);
+    }
+    else {
+      let airline = event.returnValues.airline; 
+      let flight = event.returnValues.flight;
+      let timestamp = event.returnValues.timestamp;
+      let status = event.returnValues.status;
+      
+      console.log(` OracleReport - ${airline}, ${flight}, ${timestamp}, ${status}`);
+    }
+  }
+)
+
 
 
 
 flightSuretyApp.events.OracleRequest({
-    fromBlock: 0
+    fromBlock: "latest"
     }, function (error, event) {
-      console.log(event);
+      //console.log(event);
       if (error) {
         console.log(error);
       }
-    
-      let airline = event.returnValues.airline; 
-      let flight = event.returnValues.flight;
-      let timestamp = event.returnValues.timestamp; 
-      let found = false;
+      else {
+        let airline = event.returnValues.airline; 
+        let flight = event.returnValues.flight;
+        let timestamp = event.returnValues.timestamp; 
+        let found = false;
+        console.log(`OUT ${airline} - ${flight} - ${timestamp}`)
 
-      for (var [acct, value] of oracles) {
-        console.log(acct + ' = ' + value);
-        for(let idx=0;idx<3;idx++) {
-          try {
-            // Submit a response...it will only be accepted if there is an Index match
-            SubmitOracleResponse(value[idx], airline, flight, timestamp, STATUS_CODE_ON_TIME,acct);
+        for (var [acct, value] of oracles) {
+          console.log(acct + ' = ' + value);
+          for (var i = 0; i < value.length; i++) {
+            console.log(`SENT                        ${value[i]}, "${airline}", ${flight}, ${timestamp}, ${STATUS_CODE_LATE_AIRLINE}`);
+            flightSuretyApp.methods.submitOracleResponse(value[i], airline, flight, timestamp, STATUS_CODE_LATE_AIRLINE).call({ from: acct })
+              .then(console.log(`Good ${acct} ${value[i]}`))
+              .catch(function(e) {
+              console.log(`${e.message} Error ${acct} ${i}`);
+              });
           }
-          catch(e) {
-            // Enable this when debugging
-            console.log("----------------------------------------------------------------");
-            console.log('\nError', idx, value[idx].toNumber(), flight, timestamp);
-            console.log(e.reason);
-            console.log("----------------------------------------------------------------");
-          }
-      }
+        }
       }
 
- 
-
-    console.log(event)
+    //console.log(event)
 });
 
 
