@@ -15,8 +15,8 @@ contract FlightSuretyData
     function buy (address _airline, string _flight ,  uint256 _flightDeparture)  external payable;
     function checkBoughtInsurance(address _airline, string _flight ,  uint256 _flightDeparture)  external view  returns (bool);
     function creditInsurees(address insuree) external ;
-    function pay (address insuree) external;
-    function fund () external returns (int);
+    function pay (address insuree) external payable;
+    function fund () external payable returns (int);
 }
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -38,6 +38,7 @@ contract FlightSuretyApp {
     uint private registrationCost = 5 ether;
     address private contractOwner;          // Account used to deploy contract
     FlightSuretyData fsd;
+    bool private operational = true;   
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -101,21 +102,39 @@ contract FlightSuretyApp {
 
     function isOperational() 
                             public 
-                            pure 
+                             
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return operational;  // Modify to call data contract's status
     }
+
+
+   /**
+    * @dev Sets contract operations on/off
+    *
+    * When operational mode is disabled, all write transactions except for this one will fail
+    */    
+    function setOperatingStatus
+                            (
+                                bool mode
+                            ) 
+                            external
+                            requireContractOwner
+                             
+    {
+        operational = mode;
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
-    modifier requireFunding() 
-    {
-        require(msg.value >= registrationCost, "Need Atleast 5 Ethers to Register");
-        _;
-    }
+   // modifier requireFunding() 
+   // {
+   //     require(msg.value >= registrationCost, "Need Atleast 5 Ethers to Register");
+   //     _;
+   // }
    /**
     * @dev Add an airline to the registration queue
     *
@@ -133,6 +152,15 @@ contract FlightSuretyApp {
         bool out = fsd.registerAirline(newAirline, name);   
         return out;
     }
+   function fund
+                            (   
+                            )
+                            public
+                            payable
+                            returns (int)
+    {
+        return fsd.fund.value(msg.value)();
+    }
 
 
    /**
@@ -146,13 +174,37 @@ contract FlightSuretyApp {
                                     uint256 timestamp
                                 )
                                 external
-                                pure
                                 returns (bytes32)
                                 
     {
-        return registerFlight(address airline,string  flight,uint256 timestamp) external returns (bytes32);
+        return fsd.registerFlight( airline,  flight, timestamp);
     }
     
+    function voteForAirline(address sponsoredAirline) external returns (bool)
+    {
+        return fsd.voteForAirline(sponsoredAirline);
+    }
+    function getBalance (address a) public view returns (uint256)
+    {
+        return fsd.getBalance(a);
+    }
+    function buy (address _airline, string _flight ,  uint256 _flightDeparture)  external payable
+    {
+        fsd.buy.value(msg.value)(_airline,  _flight ,   _flightDeparture);
+    }
+    function checkBoughtInsurance(address _airline, string _flight ,  uint256 _flightDeparture)  external view  returns (bool)
+    {
+        return fsd.checkBoughtInsurance(_airline, _flight ,  _flightDeparture);
+    }
+    function creditInsurees(address insuree) external 
+    {
+        fsd.creditInsurees(insuree);
+    }
+    function pay (address insuree) external
+    {
+        fsd.pay(insuree);
+    }
+
    /**
     * @dev Called after oracle has updated flight status
     *

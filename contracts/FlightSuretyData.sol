@@ -9,7 +9,8 @@ contract FlightSuretyData {
     /********************************************************************************************/
    
     address private contractOwner;
-    address private authorizedCaller;                                   // Account used to deploy contract
+    //address private authorizedCaller;     
+    mapping(address => bool) authorizedCallers;                              // Account used to deploy contract
     bool private operational = true;                                    // Blocks all state changes throughout the contract if false
     uint16 private sponsoringAirlinesCount;    
     uint8 private COUNT_AFTER_VOTING_KICKSIN = 4;
@@ -114,13 +115,13 @@ contract FlightSuretyData {
 
     modifier requireContractOwner()
     {
-        require(msg.sender == contractOwner, " Caller is not contract owner");
+        require(tx.origin == contractOwner, " Caller is not contract owner");
         _;
     }
 
     modifier requireAuthorizedCaller()
     {
-        require(msg.sender == authorizedCaller, "Caller is not Authorized Caller");
+        require(authorizedCallers[msg.sender] == true, "Caller is not Authorized Caller");
         _;
     }
 
@@ -173,7 +174,7 @@ contract FlightSuretyData {
 
     modifier requireCalleeIsFunded()
     {
-        require(airlines[msg.sender].fundsPaid >= 10, "Calling Airlines should fund before registering others");
+        require(airlines[tx.origin].fundsPaid >= 10, "Calling Airlines should fund before registering others");
         _;
     }
 
@@ -183,7 +184,8 @@ contract FlightSuretyData {
 
     function authorizeCaller(address o) public requireContractOwner
     {
-        authorizedCaller = o;
+        authorizedCallers[o] = true;
+        //authorizedCaller = o;
     }
 
     /**
@@ -228,7 +230,7 @@ contract FlightSuretyData {
     function registerAirline
                             (   address newAirline, string memory _name)
                             public
-                            //requireAuthorizedCaller
+                            requireAuthorizedCaller
                             requireNewAirline(newAirline) 
                             requireCalleeIsFunded
                             returns
@@ -284,7 +286,7 @@ contract FlightSuretyData {
         bool isDuplicate = false;
         for(uint c=0;c<AirlineSponsors[sponsoredAirline].length; c++)
         {
-            if (AirlineSponsors[sponsoredAirline][c] == msg.sender) 
+            if (AirlineSponsors[sponsoredAirline][c] == tx.origin) 
             {
                 isDuplicate = true;
                 break;
@@ -292,7 +294,7 @@ contract FlightSuretyData {
         }
         if (!isDuplicate)
         {
-            AirlineSponsors[sponsoredAirline].push(msg.sender);
+            AirlineSponsors[sponsoredAirline].push(tx.origin);
         }
         if (AirlineSponsors[sponsoredAirline].length > sponsoringAirlinesCount / 2) 
         {
@@ -308,6 +310,7 @@ contract FlightSuretyData {
                                     uint256 timestamp
                                 )
                                 external
+                                requireAuthorizedCaller
                                 requireExistingAndFundedAirline(airline)
                                 returns (
                                     bytes32
@@ -382,7 +385,7 @@ contract FlightSuretyData {
             key,
             false
         );
-        insuranceLedger[msg.sender] = le;
+        insuranceLedger[tx.origin] = le;
         cashOnHand = int(cashOnHand) + int(msg.value);
         return true;
 
@@ -398,10 +401,10 @@ contract FlightSuretyData {
                             )
     {
         bytes32 key = getFlightKey(_airline,_flight,_flightDeparture);
-        require(insuranceLedger[msg.sender].airline == _airline, "Insurance Airline Does not match");
-        require(insuranceLedger[msg.sender].exists == true, "Insurance does not exist");
+        require(insuranceLedger[tx.origin].airline == _airline, "Insurance Airline Does not match");
+        require(insuranceLedger[tx.origin].exists == true, "Insurance does not exist");
         
-        return insuranceLedger[msg.sender].exists;
+        return insuranceLedger[tx.origin].exists;
 
     }
 
@@ -455,16 +458,16 @@ contract FlightSuretyData {
     *
     */   
     function fund
-                            (   
+                            (    
                             )
                             public
                             payable
-                            requireExistingAirline(msg.sender)
+                            requireExistingAirline(tx.origin)
                             returns (int)
     {
-        airlines[msg.sender].fundsPaid += msg.value;
+        airlines[tx.origin].fundsPaid += msg.value;
         cashOnHand = int(cashOnHand) + int(msg.value);
-        return cashOnHand;
+        return int(airlines[tx.origin].fundsPaid);
     }
 
     function getFlightKey

@@ -9,7 +9,7 @@ contract('Flight Surety Tests', async (accounts) => {
     config = await Test.Config(accounts);
     //console.log(config);
     await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
-    await config.flightSuretyData.authorizeCaller(config.firstAirline);
+    //await config.flightSuretyApp.authorizeCaller(accounts[9]);
  
   });
 
@@ -20,7 +20,7 @@ contract('Flight Surety Tests', async (accounts) => {
   it(`(multiparty) has correct initial isOperational() value`, async function () {
 
     // Get operating status
-    let status = await config.flightSuretyData.isOperational.call();
+    let status = await config.flightSuretyApp.isOperational.call();
     assert.equal(status, true, "Incorrect initial operating status value");
 
   });
@@ -47,7 +47,7 @@ contract('Flight Surety Tests', async (accounts) => {
       let accessDenied = false;
       try 
       {
-          await config.flightSuretyData.setOperatingStatus(false, { from: config.testAddresses[2] });
+          await config.flightSuretyApp.setOperatingStatus(false, { from: config.testAddresses[2] });
       }
       catch(e) {
           accessDenied = true;
@@ -62,7 +62,7 @@ contract('Flight Surety Tests', async (accounts) => {
       let accessDenied = false;
       try 
       {
-          await config.flightSuretyData.setOperatingStatus(false);
+          await config.flightSuretyApp.setOperatingStatus(false);
       }
       catch(e) {
           console.log(e);
@@ -74,7 +74,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
   it(`(multiparty) can block access to functions using requireIsOperational when operating status is false`, async function () {
 
-      await config.flightSuretyData.setOperatingStatus(false);
+      await config.flightSuretyApp.setOperatingStatus(false);
 
       let reverted = false;
       try 
@@ -87,7 +87,7 @@ contract('Flight Surety Tests', async (accounts) => {
       assert.equal(reverted, true, "Access not blocked for requireIsOperational");      
 
       // Set it back for other tests to work
-      await config.flightSuretyData.setOperatingStatus(true);
+      await config.flightSuretyApp.setOperatingStatus(true);
 
   });
 
@@ -98,8 +98,8 @@ contract('Flight Surety Tests', async (accounts) => {
     let x = false;
     // ACT
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        x = await config.flightSuretyData.registerAirline(newAirline, "United Airlines",{from: config.firstAirline});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        x = await config.flightSuretyApp.registerAirline(newAirline, "United Airlines",{from: config.firstAirline});
     }
     catch(e) {
         //console.log(e);
@@ -114,7 +114,7 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(airlinew[4], false, "Able to register airline without Funds 2")
     
   });
-
+  
   it('(airline) CAN register an Airline using registerAirline() if it is FUNDED', async () => {
     
     // ARRANGE
@@ -123,9 +123,10 @@ contract('Flight Surety Tests', async (accounts) => {
     let x = false;
     // ACT
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        await config.flightSuretyData.fund({from: config.firstAirline,value:cashOnHand});
-        await config.flightSuretyData.registerAirline(newAirline, "United Airlines",{from: config.firstAirline});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        let funded = await config.flightSuretyApp.fund({from: config.firstAirline,value:cashOnHand});
+        console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%  ${funded}  =  ${cashOnHand}`);
+        await config.flightSuretyApp.registerAirline(newAirline, "United Airlines",{from: config.firstAirline});
     }
     catch(e) {
         console.log(e);
@@ -147,9 +148,9 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     // ARRANGE
     // ACT
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        await config.flightSuretyData.registerAirline(accounts[3], "Third Airline",{from: accounts[1]});
-        await config.flightSuretyData.registerAirline(accounts[4], "Fourth Airline",{from: accounts[1]});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        await config.flightSuretyApp.registerAirline(accounts[3], "Third Airline",{from: accounts[1]});
+        await config.flightSuretyApp.registerAirline(accounts[4], "Fourth Airline",{from: accounts[1]});
     }
     catch(e) {
         console.log(e);
@@ -166,14 +167,15 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     
   });
 
+  
   //Check to see if registering fifth airline fails
   it('(airline) should not be able to register 5th Airline without 50% consensus', async () => {
     
     // ARRANGE
     // ACT
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        await config.flightSuretyData.registerAirline(accounts[5], "Fifth Airline",{from: accounts[1]});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        await config.flightSuretyApp.registerAirline(accounts[5], "Fifth Airline",{from: accounts[1]});
     }
     catch(e) {
         console.log(e);
@@ -186,17 +188,16 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     
   });
 
-
   it('(airline) should be able to vote for 5th Airline After Fundings', async () => {
     let cashOnHand =  web3.utils.toWei("10",'ether');
 
     // ARRANGE
     //first fund the initial 3 new airlines
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        await config.flightSuretyData.fund({from: accounts[2],value:cashOnHand});
-        await config.flightSuretyData.fund({from: accounts[3],value:cashOnHand});
-        await config.flightSuretyData.fund({from: accounts[4],value:cashOnHand});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        await config.flightSuretyApp.fund({from: accounts[2],value:cashOnHand});
+        await config.flightSuretyApp.fund({from: accounts[3],value:cashOnHand});
+        await config.flightSuretyApp.fund({from: accounts[4],value:cashOnHand});
     }
     catch(e) {
         console.log(e);
@@ -206,12 +207,12 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
 
     try {
         //Register the airline in an unapproved state
-        //await config.flightSuretyData.registerAirline(accounts[5], "Fifth Airline",{from: accounts[1]});
+        //await config.flightSuretyApp.registerAirline(accounts[5], "Fifth Airline",{from: accounts[1]});
 
         //Cast a vote from the 3 Airlines to get the 5th airline in
-        await config.flightSuretyData.voteForAirline(accounts[5],{from: config.firstAirline});
-        await config.flightSuretyData.voteForAirline(accounts[5],{from: accounts[2]});
-        await config.flightSuretyData.voteForAirline(accounts[5],{from: accounts[3]});
+        await config.flightSuretyApp.voteForAirline(accounts[5],{from: config.firstAirline});
+        await config.flightSuretyApp.voteForAirline(accounts[5],{from: accounts[2]});
+        await config.flightSuretyApp.voteForAirline(accounts[5],{from: accounts[3]});
     }
     catch(e) {
         console.log(e);
@@ -225,19 +226,21 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
   it('(airline) total Funding should be', async () => {
     let cashOnHand =  web3.utils.toWei("10",'ether');
     //fund the 5th Airline as well
-    await config.flightSuretyData.fund({from: accounts[5],value:cashOnHand});
+    await config.flightSuretyApp.fund({from: accounts[5],value:cashOnHand});
 
     let totalFunding = await config.flightSuretyData.cashOnHand.call(); 
     totalFunding = web3.utils.fromWei(totalFunding, 'wei')
     assert.equal( totalFunding, web3.utils.toWei("50",'ether'), "Cash on hand should reflect the funding above - NOT OK")
   });
 
+
+  
  it('(airline) should be able to register a flight that is eligible for Insurance Purchase', async () => {
  
     // ACT
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        let x = await config.flightSuretyData.registerFlight(accounts[1], "WN7172", 111222333, {from: accounts[1]});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        let x = await config.flightSuretyApp.registerFlight(accounts[1], "WN7172", 111222333, {from: accounts[1]});
     }
     catch(e) {
         console.log(e);
@@ -265,8 +268,8 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     let cashOnHand =  web3.utils.toWei("1",'ether');
     var status = false;
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        status = await config.flightSuretyData.buy(accounts[1], "WN7172", 111222333, {from: accounts[9],value:cashOnHand});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        status = await config.flightSuretyApp.buy(accounts[1], "WN7172", 111222333, {from: accounts[9],value:cashOnHand});
     }
     catch(e) {
         console.log(e);
@@ -278,14 +281,19 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     
   });
 
+
+
+
+ 
+
   it('(Traveler) should be credited if insurance payout is applicable', async () => {
     // ARRANGE
     // ACT
     let cashOnHand =  web3.utils.toWei("1",'ether');
     var status = false;
     try {
-        //let x = await config.flightSuretyData.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
-        status = await config.flightSuretyData.buy(accounts[1], "WN7172", 111222333, {from: accounts[9],value:cashOnHand});
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        status = await config.flightSuretyApp.buy(accounts[1], "WN7172", 111222333, {from: accounts[9],value:cashOnHand});
     }
     catch(e) {
         console.log(e);
