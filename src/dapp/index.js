@@ -7,6 +7,7 @@ import './flightsurety.css';
 (async() => {
 
     let result = null;
+    let operationalStatus = true;
 
     let contract = new Contract('localhost', () => {
 
@@ -24,6 +25,21 @@ import './flightsurety.css';
             contract.fetchFlightStatus(flight, (error, result) => {
                 display('Oracles', 'Trigger oracles', [ { label: 'Fetch Flight Status', error: error, value: result.flight + ' ' + result.timestamp} ]);
             });
+        })
+
+        DOM.elid('change-op-status').addEventListener('click', () => {
+            operationalStatus = !operationalStatus;
+
+            contract.setOperationalStatus(false, (error, result) => {
+                console.log(error, result);
+            })
+        })
+        DOM.elid('find-op-status').addEventListener('click', () => {
+            contract.isOperational((error, result) => {
+                console.log(error,result);
+                display('Operational Status', 'Check if contract is operational', [ { label: 'Operational Status', error: error, value: result} ]);
+            });
+    
         })
     
     });

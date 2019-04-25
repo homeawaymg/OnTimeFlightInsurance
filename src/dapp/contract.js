@@ -14,13 +14,13 @@ export default class Contract {
         this.passengers = [];
     }
 
+
+
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
-           
             this.owner = accts[0];
-
             let counter = 1;
-            
+           
             while(this.airlines.length < 5) {
                 this.airlines.push(accts[counter++]);
             }
@@ -40,6 +40,12 @@ export default class Contract {
             .call({ from: self.owner}, callback);
     }
 
+    setOperationalStatus(status, callback) {
+        let self = this;
+        self.flightSuretyApp.methods.setOperatingStatus(false).send({ from: self.owner}, callback);;
+     }
+ 
+
     fetchFlightStatus(flight, callback) {
         let self = this;
         let payload = {
@@ -52,5 +58,6 @@ export default class Contract {
             .send({ from: self.owner}, (error, result) => {
                 callback(error, payload);
             });
+        
     }
 }

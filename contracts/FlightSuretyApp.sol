@@ -137,7 +137,7 @@ contract FlightSuretyApp {
    // }
    /**
     * @dev Add an airline to the registration queue
-    *
+    * 
     */   
     function registerAirline 
                             (   
