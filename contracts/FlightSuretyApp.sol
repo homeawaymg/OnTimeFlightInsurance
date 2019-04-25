@@ -9,6 +9,14 @@ import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 contract FlightSuretyData 
 {
     function registerAirline(address newAirline, string name) external returns (bool);
+    function voteForAirline(address sponsoredAirline) external returns (bool);
+    function registerFlight(address airline,string  flight,uint256 timestamp) external returns (bytes32);
+    function getBalance (address a) public view returns (uint256);
+    function buy (address _airline, string _flight ,  uint256 _flightDeparture)  external payable;
+    function checkBoughtInsurance(address _airline, string _flight ,  uint256 _flightDeparture)  external view  returns (bool);
+    function creditInsurees(address insuree) external ;
+    function pay (address insuree) external;
+    function fund () external returns (int);
 }
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -139,10 +147,10 @@ contract FlightSuretyApp {
                                 )
                                 external
                                 pure
+                                returns (bytes32)
                                 
     {
-        
-
+        return registerFlight(address airline,string  flight,uint256 timestamp) external returns (bytes32);
     }
     
    /**
