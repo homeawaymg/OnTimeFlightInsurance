@@ -31,17 +31,28 @@
         </div>
 
         <div class="row top-20">
-                <label class="form">Register Airline</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
+                <btn class="btn btn-primary" id="register-airline">Register Airlines</btn>
             </div>
         </main>
 
         <div class="row top-20">
-                <label class="form">Register Flight</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
+                <btn class="btn btn-primary" id="register-airline">Register Flights</btn> 
             </div>
         </main>
 
         <div class="row top-20">
-                <label class="form">Purchase Insurance</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
+
+                <label class="form">Purchase Insurance</label> 
+                <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Pick a Flight
+                        <span class="caret"></span></button>
+                        <ul id="flight-id" class="dropdown-menu">
+                        <li><a href="#">FLIGHT-111</a></li>
+                        <li><a href="#">FLIGHT-222</a></li>
+                        <li><a href="#">FLIGHT-333</a></li>
+                        </ul>
+                  </div>
+                <input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Purchase Insurance</btn> 
             </div>
         </main>
  

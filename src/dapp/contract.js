@@ -3,8 +3,8 @@ import Config from './config.json';
 import Web3 from 'web3';
 
 export default class Contract {
-    constructor(network, callback) {
 
+    constructor(network, callback) {
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
@@ -12,6 +12,8 @@ export default class Contract {
         this.owner = null;
         this.airlines = [];
         this.passengers = [];
+        this.flights = [];
+        this.flightToAirlines =[];
     }
 
 
@@ -22,7 +24,9 @@ export default class Contract {
             let counter = 1;
            
             while(this.airlines.length < 5) {
-                this.airlines.push(accts[counter++]);
+                this.flights[`AIRLINE-${counter}`] = `FLT${counter}143`;
+                this.flightToAirlines[ `FLT${counter}143`]=`AIRLINE-${counter}`;
+                this.airlines[`AIRLINE-${counter}`] = accts[counter++];
             }
 
             while(this.passengers.length < 5) {
@@ -60,4 +64,23 @@ export default class Contract {
             });
         
     }
+
+    RegisterAirlines() {
+        airlines.forEach(element => {
+            self.flightSuretyApp.methods.registerAirline(airlines[element], element).send({from: self.owner}).catch(e => console.log(e));
+        });
+    }
+
+    RegisterFlights() {
+        flights.forEach(element => {
+            self.flightSuretyApp.registerFlight(airlines[element], flights[element], 111222333).send({from: self.owner}).catch(e=> console.log(e));
+        });
+    }
+
+    PurchaseInsurance(flight) {
+        let cashOnHand =  web3.utils.toWei("1",'ether');
+        config.flightSuretyApp.buy(flightToAirlines[flight], flight, 111222333).send({from: accounts[9],value:cashOnHand}).catch(e=> console.log(e));
+    }
+
+
 }
