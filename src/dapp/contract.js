@@ -22,7 +22,7 @@ export default class Contract {
         this.web3.eth.getAccounts((error, accts) => {
             this.owner = accts[0];
             let counter = 1;
-           
+           /*
             while(this.airlines.length < 5) {
                 this.flights[`AIRLINE-${counter}`] = `FLT${counter}143`;
                 this.flightToAirlines[ `FLT${counter}143`]=`AIRLINE-${counter}`;
@@ -32,7 +32,7 @@ export default class Contract {
             while(this.passengers.length < 5) {
                 this.passengers.push(accts[counter++]);
             }
-
+            */
             callback();
         });
     }
@@ -46,7 +46,7 @@ export default class Contract {
 
     setOperationalStatus(status, callback) {
         let self = this;
-        self.flightSuretyApp.methods.setOperatingStatus(false).send({ from: self.owner}, callback);;
+        self.flightSuretyApp.methods.setOperatingStatus(status).send({ from: self.owner}, callback);;
      }
  
 

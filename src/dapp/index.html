@@ -13,65 +13,73 @@
 
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
         <a class="navbar-brand" href="#">FlightSurety</a>
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault"
-            aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault"
+            aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
-            
+
         </button>
     </nav>
 
     <main class="container">
 
-        <div id="display-wrapper" class="top-20">
-        </div>
-        <div class="row top-20">
-            <label class="form">Flight</label> <input type="text" id="flight-number"> <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn> 
-            <btn class="btn btn-primary" id="change-op-status">Change Operational Status</btn>
-            <btn class="btn btn-primary" id="find-op-status">find Operational Status</btn>
-        </div>
+        <table>
+            <tr>
+                <td width="50%">
+                    <span id="display-wrapper" class="top-20">
+                    </span>
+                </td>
+                <td>
+                    <span>
+                        <btn class="btn btn-primary" id="change-op-status">Change Operational Status</btn>
+                        <btn class="btn btn-primary" id="find-op-status">find Operational Status</btn>
+                    </span>
+                </td>
+            </tr>
+        </table>
 
-        <div class="row top-20">
-                <btn class="btn btn-primary" id="register-airline">Register Airlines</btn>
-            </div>
-        </main>
+        <table>
 
-        <div class="row top-20">
-                <btn class="btn btn-primary" id="register-airline">Register Flights</btn> 
-            </div>
-        </main>
+            <tr>
+                <td>
+                    <label class="form">Flight</label>
+                </td>
+                <td>
+                    <input type="text" id="flight-number">
+                    <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+                </td>
+            </tr>
 
-        <div class="row top-20">
+            <tr>
+                <td>
+                    <label class="form">Purchase Insurance</label>
+                </td>
+                <td>
+                    <input type="text" id="al-name">
+                    <btn class="btn btn-primary" id="register-airline">Purchase
+                        Insurance</btn>
+                </td>
+            </tr>
 
-                <label class="form">Purchase Insurance</label> 
-                <div class="dropdown">
-                        <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Pick a Flight
-                        <span class="caret"></span></button>
-                        <ul id="flight-id" class="dropdown-menu">
-                        <li><a href="#">FLIGHT-111</a></li>
-                        <li><a href="#">FLIGHT-222</a></li>
-                        <li><a href="#">FLIGHT-333</a></li>
-                        </ul>
-                  </div>
-                <input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Purchase Insurance</btn> 
-            </div>
-        </main>
- 
-        <div class="row top-20">
-                <label class="form">Check Flight Status</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
-            </div>
-        </main>
+            <tr>
+                <td>
+                    <label class="form">Check Flight Status</label>
+                </td>
+                <td>
+                    <input type="text" id="al-name">
+                    <btn class="btn btn-primary" id="register-airline">Check Flight Status</btn>
+                </td>
+            </tr>
 
-        <div class="row top-20">
-                <label class="form">Credit</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
-            </div>
-        </main>
-
-
-        <div class="row top-20">
-                <label class="form">Payout</label> <input type="text" id="al-address"><input type="text" id="al-name"> <btn class="btn btn-primary" id="register-airline">Register Airline</btn> 
-            </div>
-        </main>
-
+            <tr>
+                <td>
+                    <label class="form">Credit</label>
+                </td>
+                <td>
+                    <input type="text" id="al-address"><input type="text" id="al-name">
+                    <btn class="btn btn-primary" id="register-airline">Credit Passenger</btn>
+                </td>
+            </tr>
+        </table>
 
 
 </body>

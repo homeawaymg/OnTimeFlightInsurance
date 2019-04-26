@@ -28,10 +28,12 @@ import './flightsurety.css';
         })
 
         DOM.elid('change-op-status').addEventListener('click', () => {
-            operationalStatus = !operationalStatus;
+            operationalStatus  = operationalStatus ? false : true;
 
-            contract.setOperationalStatus(false, (error, result) => {
+            contract.setOperationalStatus(operationalStatus, (error, result) => {
                 console.log(error, result);
+                DOM.elid('find-op-status').click;
+
             })
         })
         DOM.elid('find-op-status').addEventListener('click', () => {
@@ -50,7 +52,9 @@ import './flightsurety.css';
 
 function display(title, description, results) {
     let displayDiv = DOM.elid("display-wrapper");
+    displayDiv.innerHTML = "";
     let section = DOM.section();
+    
     section.appendChild(DOM.h2(title));
     section.appendChild(DOM.h5(description));
     results.map((result) => {
