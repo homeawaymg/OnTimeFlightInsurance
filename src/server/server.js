@@ -122,25 +122,28 @@ flightSuretyApp.events.OracleRequest({
     fromBlock: "latest"
     }, function (error, event) {
       //console.log(event);
-      if (error) {
+      if (error) { 
         console.log(error);
       }
       else {
+        let index = event.returnValues.index; 
         let airline = event.returnValues.airline; 
         let flight = event.returnValues.flight;
         let timestamp = event.returnValues.timestamp; 
         let found = false;
-        console.log(`OUT ${airline} - ${flight} - ${timestamp}`)
+        console.log(`OUT ${index} - ${airline} - ${flight} - ${timestamp}`)
 
         for (var [acct, value] of oracles) {
-          console.log(acct + ' = ' + value);
+          //console.log(acct + ' = ' + value);
           for (var i = 0; i < value.length; i++) {
-            console.log(`SENT                        ${value[i]}, "${airline}", ${flight}, ${timestamp}, ${STATUS_CODE_LATE_AIRLINE}`);
-            flightSuretyApp.methods.submitOracleResponse(value[i], airline, flight, timestamp, STATUS_CODE_LATE_AIRLINE).call({ from: acct })
-              .then(console.log(`Good ${acct} ${value[i]}`))
-              .catch(function(e) {
-              console.log(`${e.message} Error ${acct} ${i}`);
+            //console.log(`SENT                        ${value[i]}, "${airline}", ${flight}, ${timestamp}, ${STATUS_CODE_LATE_AIRLINE}`);
+            if (index == value[i]) {
+              flightSuretyApp.methods.submitOracleResponse(/*value[i]*/index, airline, flight, timestamp, STATUS_CODE_LATE_AIRLINE).send({ from: acct })
+                .then((resolve, reject) => console.log(`${resolve} - ${reject}`))
+                .catch(function(e) {
+                console.log(`${e.message} Error ${acct} ${i}`);
               });
+            }
           }
         }
       }

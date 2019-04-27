@@ -31,9 +31,9 @@ contract FlightSuretyData {
 
     }
 
-    int public cashOnHand;
+    uint public cashOnHand;
     uint MULTIPLIER = 3;
-    uint DIVIDER = 3;
+    uint DIVIDER = 2;
 
     struct LedgerEntry {
         address airline;
@@ -352,7 +352,7 @@ contract FlightSuretyData {
             false
         );
         insuranceLedger[tx.origin] = le;
-        cashOnHand = int(cashOnHand) + int(msg.value);
+        cashOnHand = cashOnHand.add(msg.value);
         return true;
 
     }
@@ -367,7 +367,6 @@ contract FlightSuretyData {
             bytes32 key = getFlightKey(_airline, _flight, _flightDeparture);
             require(insuranceLedger[tx.origin].airline == _airline, "Insurance Airline Does not match");
             require(insuranceLedger[tx.origin].exists == true, "Insurance does not exist");
-
             return insuranceLedger[tx.origin].exists;
 
         }
@@ -376,21 +375,52 @@ contract FlightSuretyData {
     /**
      *  @dev Credits payouts to insurees
      */
-    function creditInsurees(
-        address insuree
+    function processFlightStatus(
+        address airline,
+        string flight,
+        uint256 timestamp,
+        uint8 statusCode
     )
-    external
+        external
+        requireAuthorizedCaller
+    {
+        bytes32 key = getFlightKey(airline, flight, timestamp);
+        flights[key].statusCode = statusCode;
+    }
 
-    requireContractOwner
-    requireLedgerEntryExists(insuree) {
+
+
+
+    /**
+     *  @dev Credits payouts to insurees
+     */
+
+    event Debug(string debugstring);
+ 
+    function creditInsurees(
+        
+    )
+        external
+        //requireContractOwner
+        
+        requireLedgerEntryExists(tx.origin) {
+        address insuree = tx.origin;
         LedgerEntry insurance = insuranceLedger[insuree];
         Flight f = flights[insurance.creditForKey];
         //require(insurance.creditForKey != key, "Insurance already Credited");
-        require(f.exists, "No Insusrance Exists for crediting");
+        //require(f.exists, "No Insusrance Exists for crediting");
         require(f.statusCode == STATUS_CODE_LATE_AIRLINE, "Crediting Only applicable for Flight Delay");
         insurance.credit = insurance.purchaseAmount * MULTIPLIER / DIVIDER;
         insurance.updatedTimestamp = now;
     }
+
+    function checkCredit() external view returns (uint256, uint256, uint8) {
+        address insuree = tx.origin;
+        LedgerEntry insurance = insuranceLedger[insuree];
+        Flight f = flights[insurance.creditForKey];
+        return (insurance.credit, insurance.purchaseAmount, f.statusCode);
+    }
+
 
 
     /**
@@ -398,18 +428,17 @@ contract FlightSuretyData {
      *
      */
     function pay(
-        address insuree
     )
     external
 
 
-    requireContractOwner
-    requireLedgerEntryExistsAndNotPaid(insuree)
+    //requireContractOwner
+    requireLedgerEntryExistsAndNotPaid(tx.origin)
 
 
     {
-        LedgerEntry insurance = insuranceLedger[insuree];
-        insuree.transfer(insurance.credit);
+        LedgerEntry insurance = insuranceLedger[tx.origin];
+        tx.origin.transfer(insurance.credit);
         insurance.credit = 0;
     }
 
@@ -424,7 +453,7 @@ contract FlightSuretyData {
     requireExistingAirline(tx.origin)
     returns(int) {
         airlines[tx.origin].fundsPaid += msg.value;
-        cashOnHand = int(cashOnHand) + int(msg.value);
+        cashOnHand = cashOnHand.add(msg.value);
         return int(airlines[tx.origin].fundsPaid);
     }
 

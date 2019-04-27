@@ -7,6 +7,7 @@ export default class Contract {
     constructor(network, callback) {
         let config = Config[network];
         this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
+        //this.web3 = new Web3(web3.currentProvider);  
         this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         this.initialize(callback);
         this.owner = null;
@@ -55,14 +56,12 @@ export default class Contract {
 
     fetchFlightStatus(flight, callback) {
         let self = this;
-        let payload = {
-            airline: self.airlines[0],
-            flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        } 
+        let  flightData = flight.split("|");
+        console.log(flightData);
+
         self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({ from: self.owner}, (error, result) => {
+            .fetchFlightStatus(flightData[0], flightData[1], flightData[2])
+            .send({ from: self.owner, gas: 471230, gasPrice: 100000 }, (error, result) => {
                 callback(error, payload);
             });
         
@@ -73,7 +72,7 @@ export default class Contract {
         
         let  flightData = flight.split("|");
         let cashOnHand =  this.web3.utils.toWei("1",'ether');
-        alert(flightData);
+        console.log(flightData);
         self.flightSuretyApp.methods
         .buy(flightData[0], flightData[1], flightData[2])
         .send({ from: self.owner,value:cashOnHand, gas: 471230, gasPrice: 100000 }, (error,result) => {
@@ -82,18 +81,23 @@ export default class Contract {
 
     } 
 
-    RegisterAirlines() {
-        airlines.forEach(element => {
-            self.flightSuretyApp.methods.registerAirline(airlines[element], element).send({from: self.owner}).catch(e => console.log(e));
+    creditInsurance(callback) {
+        let self = this;
+        self.flightSuretyApp.methods
+        .creditInsurees()
+        .send({from: self.owner}, (error, result) => {
+            callback(error, result);
         });
     }
 
-    RegisterFlights() {
-        flights.forEach(element => {
-            self.flightSuretyApp.registerFlight(airlines[element], flights[element], 111222333).send({from: self.owner}).catch(e=> console.log(e));
+    requestPayout(callback) {
+        let self = this;
+        self.flightSuretyApp.methods
+        .pay()
+        .send({from: self.owner}, (error, result) => {
+            callback(error, result);
         });
+
     }
-
-
 
 }

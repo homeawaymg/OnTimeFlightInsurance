@@ -41,22 +41,6 @@
 
             <tr>
                 <td>
-                    <label class="form">Flight</label>
-                </td>
-                <td>
-                    <select>
-                            
-                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN1243|111222333">WN1243</option>
-                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN2243|444555666">WN2243</option>
-                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN3243|777888999">WN3243</option>
-                    </select>
-
-                    <btn class="btn btn-primary" id="submit-oracle">Register Airlines and Flight</btn>
-                </td>
-            </tr>
-
-            <tr>
-                <td>
                     <label class="form">Purchase Insurance</label>
                 </td>
                 <td>
@@ -74,12 +58,12 @@
                     <label class="form">Check Flight Status</label>
                 </td>
                 <td>
-                    <select>
+                    <select id="check-insured-flight">
                         <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN1243|111222333">WN1243</option>
                         <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN2243|444555666">WN2243</option>
                         <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN3243|777888999">WN3243</option>
                     </select>
-                    <btn class="btn btn-primary" id="register-airline">Check Flight Status</btn>
+                    <btn class="btn btn-primary" id="submit-oracle">Check Flight Status</btn>
                 </td>
             </tr>
 
@@ -88,10 +72,18 @@
                     <label class="form">Credit</label>
                 </td>
                 <td>
-                    <btn class="btn btn-primary" id="register-airline">Get My Claim</btn>
+                    <btn class="btn btn-primary" id="request-credit">Get My Claim</btn>
                 </td>
             </tr>
-        </table>
+            <tr>
+                    <td>
+                        <label class="form">Payout</label>
+                    </td>
+                    <td>
+                        <btn class="btn btn-primary" id="request-payout">Pay to my Wallet</btn>
+                    </td>
+                </tr>
+            </table>
 
 
 </body>

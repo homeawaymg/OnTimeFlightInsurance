@@ -1,4 +1,4 @@
-pragma solidity ^ 0.4.25;
+pragma solidity ^0.4.25;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
@@ -13,9 +13,11 @@ contract FlightSuretyData {
     function getBalance(address a) public view returns(uint256);
     function buy(address _airline, string _flight, uint256 _flightDeparture) external payable  returns(bool);
     function checkBoughtInsurance(address _airline, string _flight, uint256 _flightDeparture) external view returns(bool);
-    function creditInsurees(address insuree) external;
-    function pay(address insuree) external payable;
+    function creditInsurees() external;
+    function pay() external payable;
     function fund() external payable returns(int);
+    function processFlightStatus(address airline, string flight, uint256 timestamp, uint8 statusCode) external;
+    
 }
 /************************************************** */
 /* FlightSurety Smart Contract                      */
@@ -178,21 +180,24 @@ contract FlightSuretyApp {
         return fsd.getBalance(a);
     }
 
-    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable returns(bool) {
-        return fsd.buy(_airline, _flight, _flightDeparture);
-        //fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
+    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable returns(string) {
+        //return fsd.buy(_airline, _flight, _flightDeparture);
+        fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
+        return "Purchased Insurance";
     }
 
     function checkBoughtInsurance(address _airline, string _flight, uint256 _flightDeparture) external view returns(bool) {
         return fsd.checkBoughtInsurance(_airline, _flight, _flightDeparture);
     }
 
-    function creditInsurees(address insuree) external {
-        fsd.creditInsurees(insuree);
+    function creditInsurees() external  returns(string){
+        fsd.creditInsurees();
+        return( "Insurance Credited, ready for payout");
     }
 
-    function pay(address insuree) external {
-        fsd.pay(insuree);
+    function pay() external returns(string){
+        fsd.pay();
+        return( "Payment Sent to your Wallet, Enjoy!");
     }
 
     /**
@@ -206,7 +211,11 @@ contract FlightSuretyApp {
         uint8 statusCode
     )
     internal
-    pure {}
+    {
+        fsd.processFlightStatus(airline, flight, timestamp, statusCode);
+        emit Debug("Processed Flight Status");
+
+    }
 
 
     // Generate a request for oracles to fetch flight information
@@ -215,6 +224,7 @@ contract FlightSuretyApp {
         string flight,
         uint256 timestamp
     )
+
     external {
         uint8 index = getRandomIndex(msg.sender);
 
@@ -271,6 +281,7 @@ contract FlightSuretyApp {
     // Oracles track this and if they have a matching index
     // they fetch data and submit a response
     event OracleRequest(uint8 index, address airline, string flight, uint256 timestamp);
+    event Debug(string debugstring);
 
 
     // Register an oracle with the contract
@@ -305,29 +316,34 @@ contract FlightSuretyApp {
     function submitOracleResponse(
         uint8 index,
         address airline,
-        string flight,
+        string flight, 
         uint256 timestamp,
         uint8 statusCode
     )
     external {
+        emit Debug("Starting");
+        emit OracleReport(airline, flight, timestamp, statusCode);
+        
         //require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
-
-
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
-        //require(oracleResponses[key].isOpen, "Oracle Response is not OPEN");
+        emit Debug("GOT PAST CONDITION - Index does not match oracle request");
+
+        require(oracleResponses[key].isOpen, "Oracle Response is not OPEN");
+        emit Debug("GOT PAST CONDITION - Oracle Response is not OPEN");
 
         oracleResponses[key].responses[statusCode].push(msg.sender);
-
+        emit Debug("GOT PAST PUSH - oracleResponses[key].responses[statusCode].push(msg.sender);");
         // Information isn't considered verified until at least MIN_RESPONSES
         // oracles respond with the *** same *** information
         emit OracleReport(airline, flight, timestamp, statusCode);
         if (oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES) {
-
+            emit Debug("INSIDE IF CONDITION - oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES;");
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
             processFlightStatus(airline, flight, timestamp, statusCode);
         }
+        emit Debug("OUTSIDE IF CONDITION - oracleResponses[key].responses[statusCode].length >= MIN_RESPONSES;");
     }
 
 

@@ -302,7 +302,6 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
     // ASSERT
     let result = await config.flightSuretyData.checkBoughtInsurance.call(accounts[1], "WN7172", 111222333, {from: accounts[9]});
     assert.equal(result, true, "UNABLE to purchase on an insurable Flight")
-    
   });
 
 
