@@ -14,14 +14,17 @@ export default class Contract {
         this.passengers = [];
         this.flights = [];
         this.flightToAirlines =[];
+        this.accts=[];
     }
 
 
 
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
+            this.accts = accts;
             this.owner = accts[0];
             let counter = 1;
+            console.log(accts)
            /*
             while(this.airlines.length < 5) {
                 this.flights[`AIRLINE-${counter}`] = `FLT${counter}143`;
@@ -65,6 +68,20 @@ export default class Contract {
         
     }
 
+    purchaseInsurance(flight, callback) {
+        let self = this;
+        
+        let  flightData = flight.split("|");
+        let cashOnHand =  this.web3.utils.toWei("1",'ether');
+        alert(flightData);
+        self.flightSuretyApp.methods
+        .buy(flightData[0], flightData[1], flightData[2])
+        .send({ from: self.owner,value:cashOnHand, gas: 471230, gasPrice: 100000 }, (error,result) => {
+            callback(error, result);
+        });
+
+    } 
+
     RegisterAirlines() {
         airlines.forEach(element => {
             self.flightSuretyApp.methods.registerAirline(airlines[element], element).send({from: self.owner}).catch(e => console.log(e));
@@ -77,10 +94,6 @@ export default class Contract {
         });
     }
 
-    PurchaseInsurance(flight) {
-        let cashOnHand =  web3.utils.toWei("1",'ether');
-        config.flightSuretyApp.buy(flightToAirlines[flight], flight, 111222333).send({from: accounts[9],value:cashOnHand}).catch(e=> console.log(e));
-    }
 
 
 }

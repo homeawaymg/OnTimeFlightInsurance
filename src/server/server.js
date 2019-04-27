@@ -22,10 +22,11 @@ console.log(config.url);
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
 web3.eth.defaultAccount = web3.eth.accounts[0];
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-//let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
+let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 let accts = '';
 var oracles = new Map();
 let fee = 0;
+
 async function registrationHelper() {
       // ARRANGE
       
@@ -37,11 +38,6 @@ async function registrationHelper() {
       // ACT
       accts = await web3.eth.getAccounts();
       console.log(accts);
-      //for(let a=1; a<TEST_ORACLES_COUNT; a++) {      
-      //  await flightSuretyApp.registerOracle({ from: accounts[a], value: fee });
-      //  let result = await config.flightSuretyApp.getMyIndexes.call({from: accounts[a]});
-      //  console.log(`Oracle Registered: ${result[0]}, ${result[1]}, ${result[2]}`);
-      //}
 
       accts.forEach(async acct => {
         try { 
@@ -61,8 +57,27 @@ async function registrationHelper() {
       }
     });
 } 
- 
+
+async function registerAirlineAndFlightsForTESTING() {
+  // ARRANGE 
+  accts = await web3.eth.getAccounts(); 
+  let cashOnHand =  web3.utils.toWei("15",'ether');
+  await flightSuretyData.methods.authorizeCaller(config.appAddress).send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(`Done Authorizing Caller ${config.appAddress}`).catch(`ERROR Authorizing Caller ${config.appAddress}`);
+  await flightSuretyApp.methods.fund().send({from:accts[0],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success1")).catch(e => console.log(`funding accts[0] - ${e}`));
+  await flightSuretyApp.methods.registerAirline(accts[1], "AIRLINE NUMBER 1").send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(console.log("success2")).catch(e => console.log(`Registering AAIRLINE NUMBER 1 - ${e}`));
+  await flightSuretyApp.methods.fund().send({from:accts[1],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success3")).catch(e => console.log(`funding accts[1] - ${e}`));
+  await flightSuretyApp.methods.registerFlight(accts[1], "WN1243", 111222333).send({from:accts[6],"gas": 471230, "gasPrice": 100000 }).then(console.log(`success4 - ${accts[1]}, "WN1243", 111222333`)).catch(e => console.log(`Registering Flight WN1243 - ${e}`));
+  await flightSuretyApp.methods.registerFlight(accts[1], "WN2243", 444555666).send({from:accts[6],"gas": 471230, "gasPrice": 100000 }).then(console.log("success5")).catch(e => console.log(`Registering Flight WN2243 - ${e}`));
+  await flightSuretyApp.methods.registerFlight(accts[1], "WN3243", 777888999).send({from:accts[6],"gas": 471230, "gasPrice": 100000 }).then(console.log("success6")).catch(e => console.log(`Registering Flight WN3243 - ${e}`));
+} 
+
+
+
+
 registrationHelper();
+registerAirlineAndFlightsForTESTING();
+
+
 
 
 flightSuretyApp.events.FlightStatusInfo({

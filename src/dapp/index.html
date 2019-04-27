@@ -44,8 +44,14 @@
                     <label class="form">Flight</label>
                 </td>
                 <td>
-                    <input type="text" id="flight-number">
-                    <btn class="btn btn-primary" id="submit-oracle">Submit to Oracles</btn>
+                    <select>
+                            
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN1243|111222333">WN1243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN2243|444555666">WN2243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN3243|777888999">WN3243</option>
+                    </select>
+
+                    <btn class="btn btn-primary" id="submit-oracle">Register Airlines and Flight</btn>
                 </td>
             </tr>
 
@@ -54,9 +60,12 @@
                     <label class="form">Purchase Insurance</label>
                 </td>
                 <td>
-                    <input type="text" id="al-name">
-                    <btn class="btn btn-primary" id="register-airline">Purchase
-                        Insurance</btn>
+                    <select id="flight-insured" >
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN1243|111222333">WN1243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN2243|444555666">WN2243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN3243|777888999">WN3243</option>
+                    </select>
+                    <btn class="btn btn-primary" id="purchase-insurance">Purchase Insurance</btn>
                 </td>
             </tr>
 
@@ -65,7 +74,11 @@
                     <label class="form">Check Flight Status</label>
                 </td>
                 <td>
-                    <input type="text" id="al-name">
+                    <select>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN1243|111222333">WN1243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN2243|444555666">WN2243</option>
+                        <option value="0xE62f5d49a903925D631a06Bf09dF98298D59f77D|WN3243|777888999">WN3243</option>
+                    </select>
                     <btn class="btn btn-primary" id="register-airline">Check Flight Status</btn>
                 </td>
             </tr>
@@ -75,8 +88,7 @@
                     <label class="form">Credit</label>
                 </td>
                 <td>
-                    <input type="text" id="al-address"><input type="text" id="al-name">
-                    <btn class="btn btn-primary" id="register-airline">Credit Passenger</btn>
+                    <btn class="btn btn-primary" id="register-airline">Get My Claim</btn>
                 </td>
             </tr>
         </table>

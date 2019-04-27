@@ -11,7 +11,7 @@ contract FlightSuretyData {
     function voteForAirline(address sponsoredAirline) external returns(bool);
     function registerFlight(address airline, string flight, uint256 timestamp) external returns(bytes32);
     function getBalance(address a) public view returns(uint256);
-    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable;
+    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable  returns(bool);
     function checkBoughtInsurance(address _airline, string _flight, uint256 _flightDeparture) external view returns(bool);
     function creditInsurees(address insuree) external;
     function pay(address insuree) external payable;
@@ -178,8 +178,9 @@ contract FlightSuretyApp {
         return fsd.getBalance(a);
     }
 
-    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable {
-        fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
+    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable returns(bool) {
+        return fsd.buy(_airline, _flight, _flightDeparture);
+        //fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
     }
 
     function checkBoughtInsurance(address _airline, string _flight, uint256 _flightDeparture) external view returns(bool) {
