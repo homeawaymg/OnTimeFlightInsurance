@@ -1,21 +1,22 @@
 # FlightSurety
 
-FlightSurety is a sample application project for Udacity's Blockchain course.
+FlightSurety is an Ethereum based Distributed application that enable a Flight Delay Insurance.
 
 ## Install
 
-This repository contains Smart Contract code in Solidity (using Truffle), tests (also using Truffle), dApp scaffolding (using HTML, CSS and JS) and server app scaffolding.
+This repository contains Smart Contract code in Solidity (using Truffle), tests (also using Truffle), dApp that can be used by a passenger to buy insurance (using HTML, CSS and JS) and server app which is a simulation of Oracle that report flight Delay.
 
 To install, download or clone the repo, then:
 
 `npm install`
 `truffle compile`
 
-## Develop Client
+## To Run the Distributed Client Client
 
 To run truffle tests:
 
 `truffle test ./test/flightSurety.js`
+`truffle test ./test/flightSuretyApp.js`
 `truffle test ./test/oracles.js`
 
 To use the dapp:
@@ -27,10 +28,16 @@ To view dapp:
 
 `http://localhost:8000`
 
-## Develop Server
+## To Run the Server (Which also sets up the initial registration for Client to use)
 
 `npm run server`
 `truffle test ./test/oracles.js`
+
+
+## To Run Monitor to watch various activities
+
+`npm run monitor`
+
 
 ## Deploy
 

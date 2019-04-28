@@ -13,7 +13,8 @@ module.exports = function(deployer) {
                         localhost: {
                             url: 'http://127.0.0.1:9545',
                             dataAddress: FlightSuretyData.address,
-                            appAddress: FlightSuretyApp.address
+                            appAddress: FlightSuretyApp.address,
+                            registeredAirline: firstAirline
                         }
                     }
                     fs.writeFileSync(__dirname + '/../src/dapp/config.json',JSON.stringify(config, null, '\t'), 'utf-8');

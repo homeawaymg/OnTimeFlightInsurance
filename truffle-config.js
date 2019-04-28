@@ -19,7 +19,7 @@ module.exports = {
       network_id: "*",
 //      gasPrice: 1,
       gas: 46123880,
-      accounts: 20,
+      accounts: 25,
       gasLimit: 2100000,
       defaultEtherBalance: 500
     }

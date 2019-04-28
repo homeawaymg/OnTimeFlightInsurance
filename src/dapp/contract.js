@@ -60,9 +60,9 @@ export default class Contract {
         console.log(flightData);
 
         self.flightSuretyApp.methods
-            .fetchFlightStatus(flightData[0], flightData[1], flightData[2])
+            .fetchFlightStatus(this.accts[1], flightData[0], flightData[1])
             .send({ from: self.owner, gas: 471230, gasPrice: 100000 }, (error, result) => {
-                callback(error, payload);
+                callback(error, result);
             });
         
     }
@@ -74,7 +74,7 @@ export default class Contract {
         let cashOnHand =  this.web3.utils.toWei("1",'ether');
         console.log(flightData);
         self.flightSuretyApp.methods
-        .buy(flightData[0], flightData[1], flightData[2])
+        .buy(this.accts[1], flightData[0], flightData[1])
         .send({ from: self.owner,value:cashOnHand, gas: 471230, gasPrice: 100000 }, (error,result) => {
             callback(error, result);
         });

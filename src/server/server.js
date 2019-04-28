@@ -62,7 +62,7 @@ async function registerAirlineAndFlightsForTESTING() {
   // ARRANGE 
   accts = await web3.eth.getAccounts(); 
   let cashOnHand =  web3.utils.toWei("15",'ether');
-  await flightSuretyData.methods.authorizeCaller(config.appAddress).send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(`Done Authorizing Caller ${config.appAddress}`).catch(`ERROR Authorizing Caller ${config.appAddress}`);
+  await flightSuretyData.methods.authorizeCaller(config.appAddress).send({from:config.registeredAirline,"gas": 471230, "gasPrice": 100000 }).then(`Done Authorizing Caller ${config.appAddress}`).catch(`ERROR Authorizing Caller ${config.appAddress}`);
   await flightSuretyApp.methods.fund().send({from:accts[0],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success1")).catch(e => console.log(`funding accts[0] - ${e}`));
   await flightSuretyApp.methods.registerAirline(accts[1], "AIRLINE NUMBER 1").send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(console.log("success2")).catch(e => console.log(`Registering AAIRLINE NUMBER 1 - ${e}`));
   await flightSuretyApp.methods.fund().send({from:accts[1],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success3")).catch(e => console.log(`funding accts[1] - ${e}`));

@@ -88,7 +88,7 @@ function display(title, description, results) {
     results.map((result) => {
         let row = section.appendChild(DOM.div({className:'row'}));
         row.appendChild(DOM.div({className: 'col-sm-4 field'}, result.label));
-        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? String(result.error) : String(result.value)));
+        row.appendChild(DOM.div({className: 'col-sm-8 field-value'}, result.error ? "ERROR " + String(result.error) : "Success " + String(result.value)));
         section.appendChild(row);
     })
     displayDiv.append(section);
