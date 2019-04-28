@@ -64,7 +64,7 @@ contract FlightSuretyApp {
      */
     modifier requireIsOperational() {
         // Modify to call data contract's status
-        require(true, "Contract is currently not operational");
+        require(operational, "Contract is currently not operational");
         _; // All modifiers require an "_" which indicates where the function body will be added
     }
 
@@ -140,6 +140,7 @@ contract FlightSuretyApp {
         address newAirline, string name
     )
     public
+    requireIsOperational
     returns
         (
             bool
@@ -150,6 +151,7 @@ contract FlightSuretyApp {
 
     function fund()
     public
+    requireIsOperational
     payable
     returns(int) {
         return fsd.fund.value(msg.value)();
@@ -166,13 +168,14 @@ contract FlightSuretyApp {
         uint256 timestamp
     )
     external
+    requireIsOperational
     returns(bytes32)
 
     {
         return fsd.registerFlight(airline, flight, timestamp);
     }
 
-    function voteForAirline(address sponsoredAirline) external returns(bool) {
+    function voteForAirline(address sponsoredAirline) external requireIsOperational returns(bool) {
         return fsd.voteForAirline(sponsoredAirline);
     }
 
@@ -180,7 +183,7 @@ contract FlightSuretyApp {
         return fsd.getBalance(a);
     }
 
-    function buy(address _airline, string _flight, uint256 _flightDeparture) external payable returns(string) {
+    function buy(address _airline, string _flight, uint256 _flightDeparture) external requireIsOperational payable returns(string) {
         //return fsd.buy(_airline, _flight, _flightDeparture);
         fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
         return "Purchased Insurance";
@@ -190,12 +193,12 @@ contract FlightSuretyApp {
         return fsd.checkBoughtInsurance(_airline, _flight, _flightDeparture);
     }
 
-    function creditInsurees() external  returns(string){
+    function creditInsurees() external  requireIsOperational returns(string){
         fsd.creditInsurees();
         return( "Insurance Credited, ready for payout");
     }
 
-    function pay() external returns(string){
+    function pay() external requireIsOperational returns(string){
         fsd.pay();
         return( "Payment Sent to your Wallet, Enjoy!");
     }

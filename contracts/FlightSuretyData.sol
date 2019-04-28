@@ -216,6 +216,7 @@ contract FlightSuretyData {
      */
     function registerAirline(address newAirline, string memory _name)
         public
+        requireIsOperational
         requireAuthorizedCaller
         requireNewAirline(newAirline)
         requireCalleeIsFunded
@@ -259,6 +260,7 @@ contract FlightSuretyData {
     )
     public
     requireCalleeIsFunded
+    requireIsOperational
     returns
         (
             bool
@@ -286,6 +288,7 @@ contract FlightSuretyData {
     )
     external
     requireAuthorizedCaller
+    requireIsOperational
     requireExistingAndFundedAirline(airline)
     returns(
         bytes32
@@ -331,6 +334,7 @@ contract FlightSuretyData {
     function buy(address _airline, string _flight, uint256 _flightDeparture)
     external
     payable
+    requireIsOperational
     requireExistingAirline(_airline) returns(bool) {
         bytes32 key = getFlightKey(_airline, _flight, _flightDeparture);
         //check if the flight is insurable
@@ -382,6 +386,7 @@ contract FlightSuretyData {
         uint8 statusCode
     )
         external
+        requireIsOperational
         requireAuthorizedCaller
     {
         bytes32 key = getFlightKey(airline, flight, timestamp);
@@ -401,9 +406,9 @@ contract FlightSuretyData {
         
     )
         external
-        //requireContractOwner
-        
-        requireLedgerEntryExists(tx.origin) {
+        requireIsOperational
+        requireLedgerEntryExists(tx.origin) 
+    {
         address insuree = tx.origin;
         LedgerEntry insurance = insuranceLedger[insuree];
         Flight f = flights[insurance.creditForKey];
@@ -432,7 +437,7 @@ contract FlightSuretyData {
     external
 
 
-    //requireContractOwner
+    requireIsOperational
     requireLedgerEntryExistsAndNotPaid(tx.origin)
 
 
@@ -450,6 +455,7 @@ contract FlightSuretyData {
     function fund()
     public
     payable
+    requireIsOperational
     requireExistingAirline(tx.origin)
     returns(int) {
         airlines[tx.origin].fundsPaid += msg.value;
