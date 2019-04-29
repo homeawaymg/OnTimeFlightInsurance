@@ -183,10 +183,32 @@ it('(airline) able to register upto 4 Airlilnes without voting', async () => {
 
     // ASSERT
     let airlinew1 = await config.flightSuretyData.GetAirline.call(accounts[5]); 
+    console.log(airlinew1);
 
     assert.equal(airlinew1[1], false, "5 ABLE to register fifth airline without 50% consensus - NOT OK")
     
   });
+
+  it('(airline) should not be able to register 6th Airline without 50% consensus', async () => {
+    
+    // ARRANGE
+    // ACT
+    try {
+        //let x = await config.flightSuretyApp.registerAirline.call(newAirline, "United Airlines", {from: config.flightSuretyApp.address/*,value:cashOnHand*/});
+        await config.flightSuretyApp.registerAirline(accounts[6], "Sixth Airline",{from: accounts[1]});
+    }
+    catch(e) {
+        console.log(e);
+    }
+
+    // ASSERT
+    let airlinew1 = await config.flightSuretyData.GetAirline.call(accounts[6]); 
+    console.log(airlinew1);
+    assert.equal(airlinew1[1], false, "6 ABLE to register sixth airline without 50% consensus - NOT OK")
+    
+  });
+
+
 
   it('(airline) should be able to vote for 5th Airline After Fundings', async () => {
     let cashOnHand =  web3.utils.toWei("10",'ether');

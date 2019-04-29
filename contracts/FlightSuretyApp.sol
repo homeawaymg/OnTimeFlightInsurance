@@ -7,7 +7,7 @@ pragma solidity ^0.4.25;
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract FlightSuretyData {
-    function registerAirline(address newAirline, string name) external returns(bool);
+    function registerAirline(address newAirline, string name, bool approved) external returns(bool);
     function voteForAirline(address sponsoredAirline) external returns(bool);
     function registerFlight(address airline, string flight, uint256 timestamp) external returns(bytes32);
     function getBalance(address a) public view returns(uint256);
@@ -17,11 +17,17 @@ contract FlightSuretyData {
     function pay() external payable;
     function fund() external payable returns(int);
     function processFlightStatus(address airline, string flight, uint256 timestamp, uint8 statusCode) external;
-    
+    function getLedgerAndFlightStatus() external view returns (uint8, uint256);
+    function applyInsureeCredit(uint256 credit) external returns (bool);
+    function getCalleeFunds() external returns (uint256);
+    function approveAirline(address sponsoredAirline) external returns (bool);
+    function requireExistingAndFundedAirline(address _a) view external returns(bool, uint256);
 }
 /************************************************** */
 /* FlightSurety Smart Contract                      */
 /************************************************** */
+
+
 contract FlightSuretyApp {
     using SafeMath
     for uint256; // Allow SafeMath functions to be called for all uint256 types (similar to "prototype" in Javascript)
@@ -41,6 +47,9 @@ contract FlightSuretyApp {
     address private contractOwner; // Account used to deploy contract
     FlightSuretyData fsd;
     bool private operational = true;
+    
+    uint MULTIPLIER = 3;
+    uint DIVIDER = 2;
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -136,18 +145,92 @@ contract FlightSuretyApp {
      * @dev Add an airline to the registration queue
      * 
      */
-    function registerAirline(
-        address newAirline, string name
+    /**
+     * @dev Add an airline to the registration queue
+     *      Can only be called from FlightSuretyApp contract
+     *
+     */
+
+    /*       Airline Business Logic                                                   */
+    uint8 private COUNT_AFTER_VOTING_KICKSIN = 4;
+    uint16 private  sponsoringAirlinesCount = 1;
+    mapping(address => address[]) private AirlineSponsors ;
+    mapping(address => bool) private airlines;
+
+
+
+    modifier requireNewAirline(address _a) {
+        bool a = airlines[_a];
+        require(!a, "Airline Already Exists");
+        _;
+    }
+
+    modifier requireCalleeIsFunded() {
+        require(fsd.getCalleeFunds() >= 10, "Calling Airlines should fund before registering others");
+        _;
+    }
+
+
+    function registerAirline(address newAirline, string memory _name)
+        public
+        requireIsOperational
+        requireNewAirline(newAirline)
+        requireCalleeIsFunded
+        returns
+        (
+            bool
+        ) {
+            return registerAirlineUtil(newAirline, _name);
+        }
+
+
+    function registerAirlineUtil(address newAirline, string memory _name)
+    internal
+    returns
+        (
+            bool
+        ) {
+            bool approved = false;
+            if (sponsoringAirlinesCount < COUNT_AFTER_VOTING_KICKSIN ) {
+                sponsoringAirlinesCount++;
+                approved = true;
+            }
+
+             airlines[newAirline] = fsd.registerAirline(newAirline, _name, approved);
+             return  airlines[newAirline];
+        }
+    /********************************************************************
+     * @dev implement a 50% consensus
+     *
+     *********************************************************************/
+    // 
+    function voteForAirline(
+        address sponsoredAirline
     )
     public
+    requireCalleeIsFunded
     requireIsOperational
     returns
         (
             bool
         ) {
-            bool out = fsd.registerAirline(newAirline, name);
-            return out;
+            bool isDuplicate = false;
+            for (uint c = 0; c < AirlineSponsors[sponsoredAirline].length; c++) {
+                if (AirlineSponsors[sponsoredAirline][c] == tx.origin) {
+                    isDuplicate = true;
+                    break;
+                }
+            }
+            if (!isDuplicate) {
+                AirlineSponsors[sponsoredAirline].push(tx.origin);
+            }
+            if (AirlineSponsors[sponsoredAirline].length > sponsoringAirlinesCount / 2) {
+                fsd.approveAirline(sponsoredAirline);
+            }
         }
+
+
+
 
     function fund()
     public
@@ -172,18 +255,26 @@ contract FlightSuretyApp {
     returns(bytes32)
 
     {
-        return fsd.registerFlight(airline, flight, timestamp);
-    }
 
-    function voteForAirline(address sponsoredAirline) external requireIsOperational returns(bool) {
-        return fsd.voteForAirline(sponsoredAirline);
+        bool exists;
+        uint256 fundsPaid;
+        (exists, fundsPaid) = fsd.requireExistingAndFundedAirline(airline);
+        require(exists, "Airline does not exist");
+        require(fundsPaid >= 10 ether, "Airline has not paid adequate funds, should pay a minimum of 10 Ethers" );
+
+        return fsd.registerFlight(airline, flight, timestamp);
     }
 
     function getBalance(address a) public view returns(uint256) {
         return fsd.getBalance(a);
     }
 
-    function buy(address _airline, string _flight, uint256 _flightDeparture) external requireIsOperational payable returns(string) {
+    modifier requirePaymentUnderLimit() {
+        require(msg.value <= 1 ether, "Insurance cannot exceed 1 Ether!");
+        _;
+    }
+
+    function buy(address _airline, string _flight, uint256 _flightDeparture) external requireIsOperational requirePaymentUnderLimit payable returns(string) {
         //return fsd.buy(_airline, _flight, _flightDeparture);
         fsd.buy.value(msg.value)(_airline, _flight, _flightDeparture);
         return "Purchased Insurance";
@@ -193,10 +284,33 @@ contract FlightSuretyApp {
         return fsd.checkBoughtInsurance(_airline, _flight, _flightDeparture);
     }
 
-    function creditInsurees() external  requireIsOperational returns(string){
-        fsd.creditInsurees();
+    // function creditInsurees() external  requireIsOperational returns(string){
+    //     fsd.creditInsurees();
+    //     return( "Insurance Credited, ready for payout");
+    // }
+
+    function creditInsurees(
+    )
+        external
+        requireIsOperational
+        returns (
+            string
+        )
+
+    {
+        uint8 statusCode;
+        uint256 purchaseAmount;
+
+        (statusCode, purchaseAmount) = fsd.getLedgerAndFlightStatus();
+        require(statusCode == STATUS_CODE_LATE_AIRLINE, "Crediting Only applicable for Flight Delay");
+
+        fsd.applyInsureeCredit(purchaseAmount * MULTIPLIER / DIVIDER);
         return( "Insurance Credited, ready for payout");
+
     }
+
+
+
 
     function pay() external requireIsOperational returns(string){
         fsd.pay();

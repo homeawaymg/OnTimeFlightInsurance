@@ -13,11 +13,8 @@ contract FlightSuretyData {
     //address private authorizedCaller;     
     mapping(address => bool) authorizedCallers; // Account used to deploy contract
     bool private operational = true; // Blocks all state changes throughout the contract if false
-    uint16 private sponsoringAirlinesCount;
-    uint8 private COUNT_AFTER_VOTING_KICKSIN = 4;
 
     mapping(address => address[]) AirlineSponsors;
-
     mapping(address => Airline) airlines;
 
     Airline public testOut;
@@ -88,7 +85,7 @@ contract FlightSuretyData {
     public
     payable {
         contractOwner = msg.sender;
-        registerAirlineUtil(firstAirline, firstAirlineName);
+        registerAirlineUtil(firstAirline, firstAirlineName, true);
     }
 
     /********************************************************************************************/
@@ -122,25 +119,12 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireNewAirline(address _a) {
-        Airline memory a = airlines[_a];
-        require(!a.exists, "Airline Already Exists");
-        _;
-    }
 
     modifier requireExistingAirline(address _a) {
         Airline memory a = airlines[_a];
         require(a.exists, "Airline Does Not Exist");
         _;
     }
-
-    modifier requireExistingAndFundedAirline(address _a) {
-        Airline memory a = airlines[_a];
-        require(a.exists, "Airline Does Not Exist");
-        require(a.fundsPaid >= 10, "Airline has not provided funds!");
-        _;
-    }
-
 
     modifier requireLedgerEntryExists(address _a) {
         LedgerEntry memory a = insuranceLedger[_a];
@@ -163,9 +147,10 @@ contract FlightSuretyData {
         _;
     }
 
-    modifier requireCalleeIsFunded() {
-        require(airlines[tx.origin].fundsPaid >= 10, "Calling Airlines should fund before registering others");
-        _;
+
+    //Transferring Modifier to APP as it contains business logic    
+    function getCalleeFunds() external returns (uint256) {
+        return(airlines[tx.origin].fundsPaid);
     }
 
     /********************************************************************************************/
@@ -214,29 +199,24 @@ contract FlightSuretyData {
      *      Can only be called from FlightSuretyApp contract
      *
      */
-    function registerAirline(address newAirline, string memory _name)
+    function registerAirline(address newAirline, string memory _name, bool approved)
         public
         requireIsOperational
         requireAuthorizedCaller
-        requireNewAirline(newAirline)
-        requireCalleeIsFunded
+
         returns
         (
             bool
         ) {
-            return registerAirlineUtil(newAirline, _name);
+            return registerAirlineUtil(newAirline, _name, approved);
         }
 
-    function registerAirlineUtil(address newAirline, string memory _name)
+    function registerAirlineUtil(address newAirline, string memory _name, bool approved)
     internal
     returns
         (
             bool
         ) {
-            bool approved;
-            if (sponsoringAirlinesCount < COUNT_AFTER_VOTING_KICKSIN || AirlineSponsors[newAirline].length > sponsoringAirlinesCount / 2) {
-                approved = true;
-            }
 
             Airline memory a = Airline(
                 approved, //isApproved
@@ -247,7 +227,6 @@ contract FlightSuretyData {
             );
 
             airlines[newAirline] = a;
-            sponsoringAirlinesCount++;
             return (a.exists);
         }
     /********************************************************************
@@ -255,30 +234,23 @@ contract FlightSuretyData {
      *
      *********************************************************************/
     // 
-    function voteForAirline(
+    function approveAirline(
         address sponsoredAirline
     )
     public
-    requireCalleeIsFunded
     requireIsOperational
     returns
         (
             bool
-        ) {
-            bool isDuplicate = false;
-            for (uint c = 0; c < AirlineSponsors[sponsoredAirline].length; c++) {
-                if (AirlineSponsors[sponsoredAirline][c] == tx.origin) {
-                    isDuplicate = true;
-                    break;
-                }
-            }
-            if (!isDuplicate) {
-                AirlineSponsors[sponsoredAirline].push(tx.origin);
-            }
-            if (AirlineSponsors[sponsoredAirline].length > sponsoringAirlinesCount / 2) {
-                airlines[sponsoredAirline].isApproved = true;
-            }
-        }
+        ) 
+    {
+        airlines[sponsoredAirline].isApproved = true;
+    }
+
+    function requireExistingAndFundedAirline(address _a) view external returns(bool, uint256) {
+        Airline memory a = airlines[_a];
+        return (a.exists, a.fundsPaid );
+    }
 
 
     function registerFlight(
@@ -289,7 +261,6 @@ contract FlightSuretyData {
     external
     requireAuthorizedCaller
     requireIsOperational
-    requireExistingAndFundedAirline(airline)
     returns(
         bytes32
     ) {
@@ -419,14 +390,35 @@ contract FlightSuretyData {
         insurance.updatedTimestamp = now;
     }
 
-    function checkCredit() external view returns (uint256, uint256, uint8) {
+    function checkCredit() external view returns (uint256, uint256, uint8) 
+    {
         address insuree = tx.origin;
         LedgerEntry insurance = insuranceLedger[insuree];
         Flight f = flights[insurance.creditForKey];
         return (insurance.credit, insurance.purchaseAmount, f.statusCode);
     }
 
+    function getLedgerAndFlightStatus() external view returns (uint8, uint256)
+    {
+        
+        LedgerEntry insurance = insuranceLedger[tx.origin];
+        Flight f = flights[insurance.creditForKey];
 
+        uint8 statusCode;
+        uint256 purchaseAmount;
+      //  fsd.applyInsureeCredit(insurance.purchaseAmount * MULTIPLIER / DIVIDER);
+        insurance.updatedTimestamp = now;
+        return (f.statusCode, insurance.purchaseAmount);
+    }
+
+    function applyInsureeCredit(uint256 credit) external returns (bool)
+    {
+       
+        LedgerEntry insurance = insuranceLedger[tx.origin];
+        insurance.credit = credit;
+        insurance.updatedTimestamp = now;
+        return true;
+    }
 
     /**
      *  @dev Transfers eligible payout funds to insuree

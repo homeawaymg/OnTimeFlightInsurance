@@ -46,7 +46,8 @@ import './flightsurety.css';
 
         DOM.elid('purchase-insurance').addEventListener('click', () => {
             var flight = DOM.elid('flight-insured').value;
-            contract.purchaseInsurance(flight, (error, result) => {
+            var amount = DOM.elid('flight-insurance-amount').value;
+            contract.purchaseInsurance(flight,amount, (error, result) => {
                 console.log(error,result);
                 display('Insurance', 'Purchasing Insurnace', [ { label: 'Insurance Purchase Status', error: error, value: result} ]);
             });

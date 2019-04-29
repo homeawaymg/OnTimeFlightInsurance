@@ -67,11 +67,11 @@ export default class Contract {
         
     }
 
-    purchaseInsurance(flight, callback) {
+    purchaseInsurance(flight,amount, callback) {
         let self = this;
         
         let  flightData = flight.split("|");
-        let cashOnHand =  this.web3.utils.toWei("1",'ether');
+        let cashOnHand =  this.web3.utils.toWei(amount,'ether');
         console.log(flightData);
         self.flightSuretyApp.methods
         .buy(this.accts[1], flightData[0], flightData[1])
