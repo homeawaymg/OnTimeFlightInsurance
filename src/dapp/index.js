@@ -72,7 +72,15 @@ import './flightsurety.css';
     
         })
 
-
+    
+        DOM.elid('get-wallet-address').addEventListener('click', () => {
+            
+            contract.getWalletAddress((a) => {
+                console.log(a);
+                DOM.elid('wallet').innerText = a;
+            });
+    
+        })
     });
     
 

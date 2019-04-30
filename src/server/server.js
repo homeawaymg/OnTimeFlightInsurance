@@ -31,7 +31,7 @@ async function registrationHelper() {
       // ARRANGE
       
       try {
-        fee = await flightSuretyApp.methods.REGISTRATION_FEE().call();
+        fee = await flightSuretyApp.methods.REGISTRATION_FEE().call({from: web3.eth.defaultAccount});
       } catch (e) {
         console.log(e);
       }
@@ -43,17 +43,21 @@ async function registrationHelper() {
         try { 
         let r = await flightSuretyApp.methods.registerOracle().send({
             "from": acct,
-            "value": fee,
-            "gas": 471230,
+            "value":  fee,
+            "gas": 4712309,
             "gasPrice": 100000
-        }); 
-        let result = await flightSuretyApp.methods.getMyIndexes().call({from: acct});
-        //console.log(result);
-        oracles.set(acct,result);
-        console.log(`Oracle ${acct} registered: ${oracles.get(acct)[0]}, ${oracles.get(acct)[1]}, ${oracles.get(acct)[2]}`);
+        }).catch(e =>  console.log(e)); 
+        flightSuretyApp.methods.getMyIndexes().call( {from:acct,"gas": 4712309, "gasPrice": 100000 })
+        .then(result => {
+          console.log("--------------------------------------------");
+          oracles.set(acct,result);
+          console.log(`Oracle ${acct} registered: ${oracles.get(acct)[0]}, ${oracles.get(acct)[1]}, ${oracles.get(acct)[2]}`);
+          console.log("--------------------------------------------");
+        })
+        .catch(e => console.log(e));
       } catch (e) 
       {
-        //console.log(e.message); 
+        console.log(e.message); 
       }
     });
 } 
@@ -62,7 +66,8 @@ async function registerAirlineAndFlightsForTESTING() {
   // ARRANGE 
   accts = await web3.eth.getAccounts(); 
   let cashOnHand =  web3.utils.toWei("15",'ether');
-  await flightSuretyData.methods.authorizeCaller(config.appAddress).send({from:config.registeredAirline,"gas": 471230, "gasPrice": 100000 }).then(`Done Authorizing Caller ${config.appAddress}`).catch(`ERROR Authorizing Caller ${config.appAddress}`);
+  
+  await flightSuretyData.methods.authorizeCaller(config.appAddress).send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(`Done Authorizing Caller ${config.appAddress}`).catch(`ERROR Authorizing Caller ${config.appAddress}`);
   await flightSuretyApp.methods.fund().send({from:accts[0],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success1")).catch(e => console.log(`funding accts[0] - ${e}`));
   await flightSuretyApp.methods.registerAirline(accts[1], "AIRLINE NUMBER 1").send({from:accts[0],"gas": 471230, "gasPrice": 100000 }).then(console.log("success2")).catch(e => console.log(`Registering AAIRLINE NUMBER 1 - ${e}`));
   await flightSuretyApp.methods.fund().send({from:accts[1],value:cashOnHand,"gas": 471230, "gasPrice": 100000  }).then(console.log("success3")).catch(e => console.log(`funding accts[1] - ${e}`));
@@ -102,7 +107,7 @@ flightSuretyApp.events.OracleReport({
   }, function (error, event) {
     //console.log(event);
     if (error) {
-      console.log(error);
+       console.log(error); 
     }
     else {
       let airline = event.returnValues.airline; 

@@ -29,8 +29,7 @@ contract FlightSuretyData {
     }
 
     uint public cashOnHand;
-    uint MULTIPLIER = 3;
-    uint DIVIDER = 2;
+
 
     struct LedgerEntry {
         address airline;
@@ -55,6 +54,7 @@ contract FlightSuretyData {
     uint8 private constant STATUS_CODE_LATE_WEATHER = 30;
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
+    
     struct Flight {
         bool isRegistered;
         uint8 statusCode;
@@ -373,23 +373,6 @@ contract FlightSuretyData {
 
     event Debug(string debugstring);
  
-    function creditInsurees(
-        
-    )
-        external
-        requireIsOperational
-        requireLedgerEntryExists(tx.origin) 
-    {
-        address insuree = tx.origin;
-        LedgerEntry insurance = insuranceLedger[insuree];
-        Flight f = flights[insurance.creditForKey];
-        //require(insurance.creditForKey != key, "Insurance already Credited");
-        //require(f.exists, "No Insusrance Exists for crediting");
-        require(f.statusCode == STATUS_CODE_LATE_AIRLINE, "Crediting Only applicable for Flight Delay");
-        insurance.credit = insurance.purchaseAmount * MULTIPLIER / DIVIDER;
-        insurance.updatedTimestamp = now;
-    }
-
     function checkCredit() external view returns (uint256, uint256, uint8) 
     {
         address insuree = tx.origin;
@@ -406,7 +389,6 @@ contract FlightSuretyData {
 
         uint8 statusCode;
         uint256 purchaseAmount;
-      //  fsd.applyInsureeCredit(insurance.purchaseAmount * MULTIPLIER / DIVIDER);
         insurance.updatedTimestamp = now;
         return (f.statusCode, insurance.purchaseAmount);
     }
@@ -436,7 +418,7 @@ contract FlightSuretyData {
     {
         LedgerEntry insurance = insuranceLedger[tx.origin];
         tx.origin.transfer(insurance.credit);
-        insurance.credit = 0;
+        insurance.credit = 0; //WIPE OUT CREDIT
     }
 
     /**

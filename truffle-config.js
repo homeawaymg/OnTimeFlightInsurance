@@ -9,13 +9,13 @@ module.exports = {
     develop: {
        provider: function() {
          //return new HDWalletProvider(mnemonic, "HTTP://127.0.0.1:8545/", 0, 50);
-          return new HDWalletProvider(mnemonic, "http://127.0.0.1:9545/", 0, 50);
+          return new HDWalletProvider(mnemonic, "http://127.0.0.1:7545/", 0, 50);
        },
 //       network_id: '*',
 //       gas: 4600000,
 //       gasPrice: 1
       host: "127.0.0.1",
-      port: 9545,
+      port: 7545,
       network_id: "*",
 //      gasPrice: 1,
       gas: 46123880,

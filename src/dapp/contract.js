@@ -23,7 +23,9 @@ export default class Contract {
     initialize(callback) {
         this.web3.eth.getAccounts((error, accts) => {
             this.accts = accts;
-            this.owner = accts[0];
+            this.owner = accts[11];
+
+        
             let counter = 1;
             console.log(accts)
            /*
@@ -99,5 +101,10 @@ export default class Contract {
         });
 
     }
+    getWalletAddress(callback) {
+        callback(this.owner);
+
+    }
+
 
 }
